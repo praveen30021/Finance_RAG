@@ -233,6 +233,9 @@ E[(f(x) − f̂)²]
    (High Bias, Low Var)                 (Low Bias, High Var)
 ```
 
+![Bias² falls and Variance rises as the model gets more complex](images/diag-bias-variance.svg)
+*Bias² falls and Variance rises as the model gets more complex. Total error is U-shaped — the sweet spot is where the two cross over. Bagging attacks the right-hand side (variance), boosting attacks the left (bias).*
+
 ### ⭐ How Bagging and Boosting attack this — KEY TABLE
 
 | | **Bagging** | **Boosting** |
@@ -314,6 +317,9 @@ Var( (1/M) Σ fᵢ )  =  ρσ²  +  (1 − ρ)σ² / M
                 • Random Forest    • CatBoost
                 • Extra Trees
 ```
+
+![The four ensemble families side by side — how each one creates diversity and how it combines the base models](images/diag-ensemble-families.svg)
+*The four ensemble families side by side — how each one creates diversity and how it combines the base models.*
 
 | Technique | Base models | Data | Training | Combine by |
 |---|---|---|---|---|
@@ -424,6 +430,9 @@ highest average.
 | Requirement | Any classifier | Models must support `predict_proba` |
 | Generally | Good | **Usually better** |
 | Why better | — | Uses confidence → a very confident model can outweigh two unsure ones; gives a "smoothing" effect |
+
+![The same three models and the same input, combined two different ways](images/diag-hard-vs-soft-voting.svg)
+*The same three models and the same input, combined two different ways. Hard voting throws away the confidence; soft voting keeps it.*
 
 > **Recommendation:** There is no fixed rule. **Try both** and keep whichever scores better.
 
@@ -559,6 +568,9 @@ P(selected at least once) = 1 − 1/e = 1 − 0.368 = 0.632
 └──────────────────────────────────────────────────────┘
 ```
 
+![Bootstrap sampling in action — rows repeat (amber), some are never drawn (OOB), and the 1/e limit gives the 63](images/diag-bootstrap-oob.svg)
+*Bootstrap sampling in action — rows repeat (amber), some are never drawn (OOB), and the 1/e limit gives the 63.2% / 36.8% split.*
+
 ---
 
 ## 2.3 Aggregation (combining results)
@@ -604,6 +616,9 @@ P(selected at least once) = 1 − 1/e = 1 − 0.368 = 0.632
 
 **Note:** Trees are grown **deep / unpruned** on purpose → low bias, high variance.
 Averaging then kills the variance.
+
+![Bagging architecture — one algorithm, M bootstrap samples, M deep trees trained fully in parallel, then averaged or voted](images/diag-bagging-architecture.svg)
+*Bagging architecture — one algorithm, M bootstrap samples, M deep trees trained fully in parallel, then averaged or voted.*
 
 ### Algorithm (write exactly this in an interview)
 
@@ -830,6 +845,9 @@ Node 3 (right child): randomly pick {X0, X5} →  best of those = split on X0
    better the ensemble
 4. Recall `Var = ρσ² + (1−ρ)σ²/M` — RF attacks the `ρσ²` term that bagging cannot touch
 5. 👉 This is why Random Forest usually beats plain Bagging
+
+![THE interview trap](images/diag-rf-node-vs-tree-sampling.svg)
+*THE interview trap. Bagging fixes its feature subset once per tree, so every node is stuck with the same columns. Random Forest re-draws a fresh subset at every single node — that is what decorrelates the trees.*
 
 > 🎤 **Interview one-liner:** "Both bag rows, but bagging picks its feature subset **once per
 > tree**, while Random Forest re-draws a random feature subset **at every node**. That extra
@@ -1304,6 +1322,9 @@ Repeat Steps 2–7 for `T` estimators, or until the error becomes zero.
 | `αₜ` | Amount of say of stump t |
 | `hₜ(x)` | Prediction of stump t (+1 or −1) |
 | `sign()` | Returns +1 if the sum is positive, −1 if negative |
+
+![AdaBoost over three rounds](images/diag-adaboost-flow.svg)
+*AdaBoost over three rounds. Dot size = sample weight. Points the last stump got wrong (red) grow, so the next stump is forced to concentrate on them. Lower error ⟹ higher α ⟹ more say in the final vote.*
 
 ---
 
@@ -1800,6 +1821,9 @@ r₂ = 140 − 138.80 =  +1.20      (was  −1.33)
 r₃ =  92 − 138.80 = −46.80      (was −49.33)
 ```
 > ✔ **The residuals are getting smaller.** Repeat for M iterations until they approach zero.
+
+![Gradient boosting as additive stages](images/diag-gb-additive.svg)
+*Gradient boosting as additive stages. Each tree predicts what is left over, so the residual bars shrink toward zero stage by stage.*
 
 ---
 
@@ -2307,6 +2331,9 @@ Leaf 3 (CGPA ≥ 6.75,  Students 3,4)  : Output = (0.7+3.7)/(2+0) = 4.4/2 = 2.2
  [Out: −2.8]     [Out: −1.3]
 ```
 
+![The worked example as a picture: compute SS for the root, try every candidate split, keep the one with the highest Gain, then read each leaf's output straight off the formula](images/diag-xgb-gain-tree.svg)
+*The worked example as a picture: compute SS for the root, try every candidate split, keep the one with the highest Gain, then read each leaf's output straight off the formula.*
+
 ### Stage 2 — Update the model (η = 0.3)
 ```
 Student 1 (CGPA 4.0): 4.0<6.75 Yes → 4.0<5.0 Yes → Out −2.8
@@ -2599,6 +2626,9 @@ Linear Regression loss:          XGBoost loss w.r.t. a tree:
 ```
 
 **Solution: approximate the loss with a smooth 2nd-order Taylor polynomial.**
+
+![Left: a tree's output is piecewise-constant, so the loss is a staircase with no usable derivative](images/diag-xgb-taylor.svg)
+*Left: a tree's output is piecewise-constant, so the loss is a staircase with no usable derivative. Right: the 2nd-order Taylor expansion replaces it with a smooth quadratic that has a closed-form minimum w* = −G/(H+λ).*
 
 ### 6.6.4 Step 3 — Apply Taylor Series
 
@@ -3065,6 +3095,9 @@ Process:
 **Result:** XGBoost **learns a "default direction"** for missing values, separately for every
 split. No preprocessing needed.
 
+![Sparsity-aware split finding](images/diag-xgb-missing-direction.svg)
+*Sparsity-aware split finding. XGBoost sends the missing rows left, scores it, sends them right, scores that, and permanently stores whichever direction gave the higher gain.*
+
 > 🎤 **Interview one-liner:** "XGBoost doesn't impute missing values — it treats 'missing' as
 > a direction. At each split it computes the gain with missings sent left and with missings
 > sent right, and stores whichever is better as that node's default direction."
@@ -3377,6 +3410,9 @@ In a leaf-wise tree, depth is NOT bounded by num_leaves.
 | Overfitting risk | Lower | **Higher** (control with `num_leaves`, `min_data_in_leaf`) |
 | Best for | Small/medium data | **Large data** |
 
+![Level-wise splits every node at a depth and stays balanced](images/diag-lgbm-leafwise-vs-levelwise.svg)
+*Level-wise splits every node at a depth and stays balanced. Leaf-wise spends the same leaf budget on the highest-gain splits only — lower loss, but deeper and easier to overfit.*
+
 ---
 
 ## 7.4 ⭐⭐ GOSS — Gradient-based One-Side Sampling
@@ -3468,6 +3504,9 @@ Notice the `(1−a)/b` sitting in front of every **B** term — that is the comp
 **Hyperparameters:** `boosting_type='goss'`, `top_rate` (= a, default 0.2), `other_rate`
 (= b, default 0.1).
 
+![GOSS: keep every large-gradient (hard) row, randomly sample a small slice of the rest, then multiply those sampled gradients by (1−a)/b so the gain estimate stays unbiased](images/diag-lgbm-goss.svg)
+*GOSS: keep every large-gradient (hard) row, randomly sample a small slice of the rest, then multiply those sampled gradients by (1−a)/b so the gain estimate stays unbiased.*
+
 > 🎤 **Interview one-liner:** "GOSS keeps every row with a large gradient — those are the
 > under-trained, informative ones — and randomly samples only a small fraction of the
 > small-gradient rows. To stop that sampling from distorting the data distribution, the
@@ -3543,6 +3582,9 @@ After  EFB:   O( #data × #bundles )      where #bundles ≪ #features
 For a one-hot encoded dataset this can be a **10–100× reduction** in effective features.
 
 **Hyperparameters:** `enable_bundle=True` (default), `max_conflict_rate`.
+
+![EFB: three one-hot columns that are never non-zero together become one column](images/diag-lgbm-efb.svg)
+*EFB: three one-hot columns that are never non-zero together become one column. Offsets give each original feature a disjoint value range, so nothing is lost and only one histogram is needed.*
 
 > 🎤 **Interview one-liner:** "EFB bundles mutually exclusive sparse features — ones that are
 > never non-zero together, like one-hot columns — into a single feature by giving each
@@ -3814,6 +3856,9 @@ Notice each row's own `y` never appears in its own TS value. ✔
 **Solution:** CatBoost uses **several different random permutations** (default 4) and
 averages, so no single row is unlucky in every permutation.
 
+![Greedy target encoding leaks the label; with unique IDs the encoding literally becomes y](images/diag-catboost-ordered-ts.svg)
+*Greedy target encoding leaks the label; with unique IDs the encoding literally becomes y. Ordered TS computes each row's statistic from only the rows that came before it in a random permutation.*
+
 ---
 
 ## 8.3 ⭐⭐ Ordered Boosting (fixing Prediction Shift)
@@ -3879,6 +3924,9 @@ residual for x₆ uses M₅ (trained on x₁..x₅)
 **CatBoost's trick:** it maintains only `O(log n)` supporting models (at positions
 1, 2, 4, 8, 16, ...) and reuses the same permutations that Ordered TS uses. This brings the
 cost back to something comparable with ordinary boosting.
+
+![Prediction shift and its cure](images/diag-catboost-ordered-boosting.svg)
+*Prediction shift and its cure. Row 5's residual is computed with M₄ — a model trained only on rows 1–4 — so row 5 never influences its own gradient.*
 
 ### Two modes
 | Mode | When to use |
@@ -3948,6 +3996,9 @@ NO branching, NO if-else chain — just ONE array lookup.
 ✘ **Less expressive per tree** — a normal tree can use different features on different
 branches. CatBoost compensates by building **more trees** (its default `depth=6` is modest
 and `iterations=1000`).
+
+![In an oblivious tree every node at a given depth asks the same question, so the path through the tree is just a bit-vector — and prediction collapses into a single array lookup](images/diag-catboost-oblivious-tree.svg)
+*In an oblivious tree every node at a given depth asks the same question, so the path through the tree is just a bit-vector — and prediction collapses into a single array lookup.*
 
 > 🎤 **Interview one-liner:** "CatBoost uses oblivious trees, where every node at a given
 > depth shares the same split. That makes each tree weaker but acts as built-in
@@ -4273,6 +4324,9 @@ GRAND TOTAL = 16 models trained
 ```
 > **Rule:** every base model is trained **K times during CV, plus once on the full data.**
 
+![Out-of-fold predictions](images/diag-stacking-oof.svg)
+*Out-of-fold predictions. Each fold is predicted by a model trained on the other three, so every one of the 800 meta-features comes from a model that never saw that row.*
+
 ---
 
 ## 9.5 ⭐ Blending vs Stacking (the terminology question)
@@ -4417,6 +4471,9 @@ Need an INTERPRETABLE baseline fast, with almost no tuning?
 Competition / squeezing the last 0.1%?
  └──────→ STACK XGBoost + LightGBM + CatBoost + Random Forest
 ```
+
+![A practical decision path for picking an ensemble algorithm on tabular data](images/diag-choose-algorithm.svg)
+*A practical decision path for picking an ensemble algorithm on tabular data.*
 
 ---
 
