@@ -18,7 +18,7 @@
   <div class="box def">
     <div class="bt">How this doc is written</div>
     <p>Every function is given in one line: <b>what it is used for</b> + <b>how to write the code</b>. No long outputs, no extra story. Concepts that interviewers dig into (broadcasting, view vs copy, groupby, merge types, figure vs axes level) get a short box with a diagram.</p>
-    <p><b>Day before interview:</b> read the mindmaps (page 2&ndash;3), all green <i>"In interview, say this"</i> boxes, and Part 5 (Q&amp;A) + Part 6 (cheat sheet).</p>
+    <p><b>Day before interview:</b> read the mindmaps, the theory boxes in 0.3, all green <i>"In interview, say this"</i> boxes, then Part 5 (88 Q&amp;A) and Part 6 (cheat sheet + 20 golden rules).</p>
   </div>
   <div class="meta">Covers every topic of the NumPy, Pandas, Matplotlib and Seaborn revision guides &mdash; nothing important dropped.</div>
 </div>
@@ -30,6 +30,7 @@
   <div class="grp">Part 0 &mdash; Big Picture</div>
   <div class="ti"><span class="i">0.1</span><span>Master mindmap of the 4 libraries</span></div>
   <div class="ti"><span class="i">0.2</span><span>How the 4 libraries fit together</span></div>
+  <div class="ti"><span class="i">0.3</span><span>Theory words + basic statistics</span></div>
   <div class="grp">Part 1 &mdash; NumPy</div>
   <div class="ti"><span class="i">1.1</span><span>Why NumPy + mindmap</span></div>
   <div class="ti"><span class="i">1.2</span><span>Creating arrays</span></div>
@@ -75,8 +76,9 @@
   <div class="ti"><span class="i">4.4</span><span>heatmap, clustermap, grids</span></div>
   <div class="ti"><span class="i">4.5</span><span>Styling &amp; palettes</span></div>
   <div class="grp">Part 5 &amp; 6</div>
-  <div class="ti"><span class="i">5</span><span>Rapid-fire interview Q&amp;A (45)</span></div>
-  <div class="ti"><span class="i">6</span><span>Master cheat sheet + common mistakes</span></div>
+  <div class="ti"><span class="i">5</span><span>Rapid-fire interview Q&amp;A (1&ndash;45)</span></div>
+  <div class="ti"><span class="i">5B</span><span>More rapid-fire Q&amp;A (46&ndash;88)</span></div>
+  <div class="ti"><span class="i">6</span><span>"I want to..." cheat sheet + 20 golden rules + mistakes</span></div>
 </div>
 </section>
 
@@ -193,6 +195,51 @@
 </table>
 </section>
 
+<section>
+<h2 class="sec"><span class="n">0.3</span>Theory Words You Must Know First</h2>
+<p class="lead">These words come inside almost every answer. If these are clear, the rest of the doc becomes easy.</p>
+<h3>Types of analysis</h3>
+<table>
+<tr><th style="width:118px">Word</th><th>Meaning in simple words</th><th>Charts used</th></tr>
+<tr><td><b>EDA</b></td><td>Exploratory Data Analysis &mdash; looking at the data first (shape, missing values, patterns) before building anything</td><td>all of them</td></tr>
+<tr><td><b>Univariate</b></td><td>Studying <b>one</b> column alone</td><td>histogram, countplot, boxplot</td></tr>
+<tr><td><b>Bivariate</b></td><td>Studying <b>two</b> columns together</td><td>scatter, boxplot by category, heatmap</td></tr>
+<tr><td><b>Multivariate</b></td><td><b>Three or more</b> columns together</td><td>hue, size, facet, pairplot</td></tr>
+</table>
+<h3>Types of data</h3>
+<table>
+<tr><th style="width:118px">Type</th><th>Meaning</th><th>Example</th></tr>
+<tr><td><b>Numerical</b></td><td>Numbers you can do maths on</td><td>age, salary, runs</td></tr>
+<tr><td>&nbsp;&nbsp;&bull; Continuous</td><td>Any value in a range, decimals allowed</td><td>height 5.4 ft</td></tr>
+<tr><td>&nbsp;&nbsp;&bull; Discrete</td><td>Countable whole numbers</td><td>number of children</td></tr>
+<tr><td><b>Categorical</b></td><td>Labels / groups</td><td>city, gender</td></tr>
+<tr><td>&nbsp;&nbsp;&bull; Nominal</td><td>No order</td><td>Delhi, Pune, Goa</td></tr>
+<tr><td>&nbsp;&nbsp;&bull; Ordinal</td><td>Has an order</td><td>Low &lt; Medium &lt; High</td></tr>
+</table>
+<p class="nb"><b>Why this matters:</b> the chart and the statistic you choose depend only on these two things &mdash; how many columns, and which type they are.</p>
+
+<h3>Basic statistics (asked along with charts)</h3>
+<table>
+<tr><th style="width:118px">Term</th><th>Simple meaning</th><th>When to use / what it tells</th></tr>
+<tr><td><b>Mean</b></td><td>Average = total &divide; count</td><td>Good only when there are no big outliers</td></tr>
+<tr><td><b>Median</b></td><td>The middle value after sorting</td><td><b>Safe with outliers</b> &mdash; that is why we fill salary with median</td></tr>
+<tr><td><b>Mode</b></td><td>The most repeated value</td><td>For text / category columns</td></tr>
+<tr><td><b>Variance</b></td><td>Average of squared distances from the mean</td><td>Measures spread (unit is squared)</td></tr>
+<tr><td><b>Std deviation</b></td><td>Square root of variance</td><td>Spread in the <b>same unit</b> as the data</td></tr>
+<tr><td><b>Range</b></td><td>max &minus; min</td><td>Very rough spread</td></tr>
+<tr><td><b>Percentile</b></td><td>Value below which that % of data lies</td><td>90th percentile salary = 90% earn less</td></tr>
+<tr><td><b>Quartiles</b></td><td>Q1 = 25%, Q2 = median, Q3 = 75%</td><td>Used by the box plot</td></tr>
+<tr><td><b>IQR</b></td><td>Q3 &minus; Q1 &mdash; the middle 50% of the data</td><td>Outlier rule: below Q1&minus;1.5&times;IQR or above Q3+1.5&times;IQR</td></tr>
+<tr><td><b>Outlier</b></td><td>A value far away from the rest</td><td>Can be a data error or a genuine rare case &mdash; check before deleting</td></tr>
+<tr><td><b>Skewness</b></td><td>Is the distribution tilted to one side?</td><td>Right skew (income): mean &gt; median. Left skew: mean &lt; median</td></tr>
+<tr><td><b>Normal distribution</b></td><td>The bell curve, symmetric around the mean</td><td>68% of data within 1 std, 95% within 2 std</td></tr>
+<tr><td><b>Bimodal</b></td><td>Distribution with <b>two peaks</b></td><td>Means two different groups are mixed in one column</td></tr>
+<tr><td><b>Correlation</b></td><td>How two numeric columns move together (&minus;1 to +1)</td><td>Never proves cause</td></tr>
+</table>
+<div class="box int"><div class="bt">The one line that explains mean vs median</div>
+<p>"If 9 people earn 20,000 and 1 person earns 10 lakh, the <b>mean</b> becomes about 1.18 lakh, which describes nobody. The <b>median</b> stays 20,000, which is the real picture. So with outliers I always report and fill with median."</p></div>
+</section>
+
 <!-- ============ PART 1: NUMPY ============ -->
 <div class="part-head" style="background:#1f77b4">
   <div class="pk">Part 1</div>
@@ -217,6 +264,7 @@
 
 <section>
 <h2 class="sec"><span class="n">1.2</span>Creating Arrays</h2>
+<p class="lead">An array is a <b>fixed block of memory holding items of one type</b>. So at creation time two things get decided: the <b>shape</b> and the <b>dtype</b>. These are the common ways to make one.</p>
 <table class="fn">
 <tr><th style="width:150px">Function</th><th>What it is used for</th><th style="width:195px">Code</th></tr>
 <tr><td>np.array()</td><td>Make an array from a list / list of lists</td><td>np.array([[1,2],[3,4]])</td></tr>
@@ -237,6 +285,7 @@
 
 <section>
 <h2 class="sec"><span class="n">1.3</span>Attributes &amp; dtype</h2>
+<p class="lead">Attributes are not functions &mdash; they are facts already stored about the array, so there are no brackets (<code>a.shape</code>, not <code>a.shape()</code>).</p>
 <table class="fn">
 <tr><th style="width:120px">Attribute</th><th>Meaning</th><th style="width:170px">Example</th></tr>
 <tr><td>a.shape</td><td>Rows, columns (tuple) &mdash; most used</td><td>(2, 3)</td></tr>
@@ -266,6 +315,7 @@
 
 <section>
 <h2 class="sec"><span class="n">1.5</span>Indexing, Slicing, Iteration</h2>
+<p class="lead"><b>Indexing</b> = picking one item by its position. <b>Slicing</b> = picking a range. In 2-D you give two things separated by a comma: <code>[rows, columns]</code>.</p>
 <pre><code>a[2]            <span class="c"># 1-D: 3rd item (index starts at 0)</span>
 a[-1]           <span class="c"># last item</span>
 m[1, 2]         <span class="c"># 2-D: row 1, column 2   (better than m[1][2])</span>
@@ -313,6 +363,9 @@ np.nditer(m)         <span class="c"># efficient iterator</span></code></pre>
 
 <section>
 <h2 class="sec"><span class="n">1.7</span>Operations &amp; the axis Idea</h2>
+<div class="box def"><div class="bt">Theory: what is vectorization?</div>
+<p>In normal Python you write a <code>for</code> loop and Python checks the type of every value, one by one &mdash; that is slow. In NumPy you write the operation on the <b>whole array</b> (<code>a + b</code>), and NumPy runs that loop inside compiled <b>C</b> code where all items are already the same type. The loop still happens, but it happens in fast machine code instead of slow Python. That is vectorization, and that is the real reason NumPy is 10&ndash;100 times faster.</p>
+<p><b>ufunc</b> (universal function) is the name for a function like <code>np.sqrt</code> that works item by item on the whole array in this vectorized way.</p></div>
 <h4>Arithmetic &amp; universal functions (ufuncs) &mdash; item by item</h4>
 <pre><code>a + b, a - b, a * b, a / b, a ** 2, a % 2    <span class="c"># element-wise</span>
 np.sqrt(a), np.exp(a), np.log(a), np.sin(a), np.round(a, 2), np.abs(a)
@@ -372,6 +425,7 @@ a &gt; 5, (a &gt; 2) &amp; (a &lt; 8)                      <span class="c"># giv
 
 <section>
 <h2 class="sec"><span class="n">1.8</span>Reshaping</h2>
+<p class="lead">Theory point that impresses: in memory an array is stored as <b>one long line of numbers</b> (row by row, called C order). <code>reshape</code> only changes <b>how NumPy reads</b> that line &mdash; it does not move any data. That is why reshaping is almost free and usually returns a view.</p>
 <table class="fn">
 <tr><th style="width:150px">Function</th><th>What it is used for</th><th style="width:175px">Code</th></tr>
 <tr><td>reshape()</td><td>Change shape. Total items must match. <code>-1</code> = "you calculate it"</td><td>a.reshape(2,-1)</td></tr>
@@ -387,6 +441,7 @@ a &gt; 5, (a &gt; 2) &amp; (a &lt; 8)                      <span class="c"># giv
 
 <section>
 <h2 class="sec"><span class="n">1.9</span>Fancy Indexing, Boolean Indexing, np.where</h2>
+<p class="lead">Normal indexing takes positions one by one. <b>Fancy</b> indexing takes a whole <b>list of positions</b> at once. <b>Boolean</b> indexing first builds a True/False array (a <b>mask</b>) from a condition, and then keeps only the items where it is True. Boolean indexing is the base of filtering in Pandas too.</p>
 <pre><code><span class="c"># FANCY: pick by a list of positions, in any order, repeats allowed</span>
 a[[0, 3, 1]]
 m[[0, 2], :]                 <span class="c"># rows 0 and 2</span>
@@ -568,6 +623,8 @@ a + np.array([10,20])[:, np.newaxis]</code></pre>
 <tr><td><b>DataFrame</b></td><td>Full table: many Series sharing one index (2-D)</td><td><code>pd.DataFrame({'a':[1,2],'b':[3,4]})</code></td></tr>
 <tr><td><b>Index</b></td><td>The row labels. Can be numbers, text or dates</td><td><code>df.index</code>, <code>df.columns</code></td></tr>
 </table>
+<div class="box def"><div class="bt">Theory: what is the Index and why does it exist?</div>
+<p>The <b>index</b> is the name tag of every row. NumPy rows have only positions (0,1,2); Pandas rows have <b>labels</b>. Because of the index Pandas can do three things NumPy cannot: look up a row by its name (<code>df.loc['R102']</code>), <b>align</b> two tables automatically when you add or merge them (same labels get matched, rest become NaN), and slice by date (<code>df.loc['2021']</code>). Alignment is the main idea &mdash; Pandas matches on labels, not on position.</p></div>
 <p class="nb"><b>Why Pandas and not NumPy?</b> A NumPy array holds one data type and has no labels. A DataFrame holds numbers, text and dates in different columns, has column names and row labels, and has ready tools for missing data, grouping and joining. (Pandas = "Panel Data", built on NumPy.)</p>
 <pre><code>df['city']            <span class="c"># one column  -&gt; Series</span>
 df[['city','age']]    <span class="c"># many columns -&gt; DataFrame (double brackets!)</span>
@@ -577,6 +634,7 @@ df.drop(columns=['a'], inplace=True)</code></pre>
 
 <section>
 <h2 class="sec"><span class="n">2.2</span>read_csv() &amp; Saving</h2>
+<p class="lead">A CSV file is just plain text with commas. <code>read_csv</code> reads it and <b>guesses</b> the type of every column. That guess is often wrong (dates read as text, pin codes read as numbers), so these parameters exist to control it.</p>
 <table class="fn">
 <tr><th style="width:150px">Parameter</th><th>What it is used for</th><th style="width:160px">Code</th></tr>
 <tr><td>sep / delimiter</td><td>Separator if not comma (tab, pipe)</td><td>sep='\t'</td></tr>
@@ -596,6 +654,7 @@ df.to_csv('out.csv', index=False)   <span class="c"># index=False or you get an 
 
 <section>
 <h2 class="sec"><span class="n">2.3</span>Looking at Data (first 5 minutes with any dataset)</h2>
+<p class="lead">This step is called <b>data profiling</b>: how big is the data, what type is each column, how much is missing, and does anything look strange. Interviewers often ask exactly this &mdash; "what will you do first after loading the data?"</p>
 <table class="fn">
 <tr><th style="width:150px">Function</th><th>What it is used for</th></tr>
 <tr><td>df.head(n) / tail(n)</td><td>First / last n rows</td></tr>
@@ -655,6 +714,7 @@ df.at[2,'age']      df.iat[2,1]          <span class="c"># fastest for ONE value
 
 <section>
 <h2 class="sec"><span class="n">2.5</span>Filtering (Boolean Masking), isin, query</h2>
+<p class="lead"><b>How filtering actually works:</b> <code>df['age'] &gt; 25</code> does not give you rows &mdash; it gives a <b>Series of True/False</b>, one for every row. That is the <b>mask</b>. When you put the mask inside <code>df[...]</code>, Pandas keeps only the rows where it is True. Everything else (isin, between, str.contains) is just another way of building that same mask.</p>
 <pre><code>df[df['age'] &gt; 25]
 df[(df['age'] &gt; 25) &amp; (df['city'] == 'Delhi')]    <span class="c"># &amp; | ~  with brackets</span>
 df[df['city'].isin(['Delhi','Pune'])]             <span class="c"># match a list (instead of many ORs)</span>
@@ -671,6 +731,7 @@ df.nlargest(3, 'salary')     df.nsmallest(3, 'salary')</code></pre>
 
 <section>
 <h2 class="sec"><span class="n">2.6</span>value_counts, sort_values, drop_duplicates</h2>
+<p class="lead"><code>value_counts()</code> gives the <b>frequency distribution</b> of a category column &mdash; which value comes how many times. It is the first thing to run on any text column, because it instantly shows spelling mistakes ("Delhi" and "delhi"), rare categories, and class imbalance.</p>
 <table class="fn">
 <tr><th style="width:195px">Code</th><th>What it is used for</th></tr>
 <tr><td>df['city'].value_counts()</td><td>Count of each category, biggest first</td></tr>
@@ -742,6 +803,7 @@ s.isnull(), s.notnull(), s.astype(int)</code></pre>
   <text x="280" y="114" text-anchor="middle" font-size="9" fill="#5d6678">df.groupby('team')['runs'].mean()   &mdash;  same as SQL GROUP BY</text>
 </svg>
 </div>
+<p class="nb"><b>Theory:</b> <code>df.groupby('team')</code> alone prints only an object, not a table. That is because Pandas is <b>lazy</b> here &mdash; it has only made the groups, and nothing is calculated until you tell it <i>what</i> to calculate (<code>.mean()</code>, <code>.sum()</code>, <code>.agg()</code>).</p>
 <table class="fn">
 <tr><th style="width:235px">Code</th><th>What it is used for</th></tr>
 <tr><td>df.groupby('team')['runs'].mean()</td><td>Average per group (most common)</td></tr>
@@ -766,6 +828,7 @@ df['pct'] = df['runs'] / df.groupby('team')['runs'].transform('sum') * 100</code
 
 <section>
 <h2 class="sec"><span class="n">2.9</span>merge, join, concat</h2>
+<p class="lead">Joining means <b>bringing columns from a second table</b> next to the first one, matched on a common column (the <b>key</b>). It is exactly SQL JOIN. The only decision is: what to do with rows that have no match &mdash; and that is what <code>how=</code> answers.</p>
 <div class="fig">
 <svg viewBox="0 0 560 108" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif" font-size="9">
   <g>
@@ -806,6 +869,7 @@ pd.concat([a, b], ignore_index=True)</code></pre>
 
 <section>
 <h2 class="sec"><span class="n">2.10</span>pivot_table, crosstab, melt, pivot</h2>
+<p class="lead">Reshaping means changing the <b>layout</b> of the table without changing the information. <b>Long</b> format has many rows and few columns (good for storing and for Seaborn); <b>wide</b> format spreads one column's values into many columns (good for reading and reports). <code>pivot</code> goes long &rarr; wide, <code>melt</code> goes wide &rarr; long.</p>
 <pre><code>df.pivot_table(index='team', columns='season', values='runs',
                aggfunc='mean',        <span class="c"># mean is the DEFAULT</span>
                margins=True,          <span class="c"># adds "All" total row/column</span>
@@ -827,6 +891,7 @@ df.stack() / df.unstack()</code></pre>
 
 <section>
 <h2 class="sec"><span class="n">2.11</span>corr()</h2>
+<p class="lead">Correlation answers: <b>when one column goes up, what does the other do?</b> It is a number from &minus;1 to +1. Important theory: it only measures a <b>straight-line</b> relation, and it is <b>unit-free</b>, so you can compare salary-vs-age with height-vs-weight on the same scale.</p>
 <pre><code>df.corr(numeric_only=True)            <span class="c"># Pearson (linear) by default</span>
 df.corr(method='spearman')            <span class="c"># rank based - catches non-linear but monotonic</span>
 df['a'].corr(df['b'])
@@ -861,6 +926,14 @@ sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='coolwarm', vmin=-1, vm
 
 <section>
 <h2 class="sec"><span class="n">2.13</span>Missing Values: dropna &amp; fillna</h2>
+<p class="lead">Missing values are shown as <code>NaN</code> (Not a Number). Theory first: <b>why</b> is it missing? That decides what to do.</p>
+<table>
+<tr><th style="width:150px">Type</th><th>Meaning</th><th>Safe to do</th></tr>
+<tr><td><b>MCAR</b> (completely at random)</td><td>Missing for no reason at all &mdash; a form got skipped</td><td>Dropping is safe</td></tr>
+<tr><td><b>MAR</b> (at random)</td><td>Missing depends on another column &mdash; e.g. young people skip "income"</td><td>Fill using that other column (groupby fill)</td></tr>
+<tr><td><b>MNAR</b> (not at random)</td><td>Missing depends on the hidden value itself &mdash; high earners hide income</td><td>Dangerous; dropping creates bias. Mark it as "Unknown"</td></tr>
+</table>
+<p class="nb">Imputation = the word for filling missing values. Dropping is simple but you lose data; filling keeps the rows but can reduce the real variance.</p>
 <pre><code>df.isnull().sum()                 <span class="c"># count per column - ALWAYS run first</span>
 df.isnull().sum().sum()           <span class="c"># total missing</span>
 df['a'].isnull().mean()*100       <span class="c"># % missing in a column</span>
@@ -908,6 +981,7 @@ df['city'] = df['city'].astype('category')  <span class="c"># big memory saving 
 
 <section>
 <h2 class="sec"><span class="n">2.15</span>apply, map, cut, qcut, assign, explode</h2>
+<p class="lead">These are for <b>feature engineering</b> &mdash; making a new column out of existing ones. The theory to remember: <code>map</code> and <code>apply</code> still run a Python loop inside, so they are slow; a vectorized expression or <code>np.where</code> does the same work in C and is much faster. <b>Binning</b> (cut/qcut) means turning a numeric column into categories, which helps when the exact number does not matter, only the range.</p>
 <table class="fn">
 <tr><th style="width:215px">Code</th><th>What it is used for</th></tr>
 <tr><td>s.map({'M':1,'F':0})</td><td>Replace values using a dictionary (Series only)</td></tr>
@@ -927,6 +1001,7 @@ df['city'] = df['city'].astype('category')  <span class="c"># big memory saving 
 
 <section>
 <h2 class="sec"><span class="n">2.16</span>Rolling, Time Series, Copy Rules</h2>
+<p class="lead">Daily data jumps up and down a lot (noise). A <b>rolling / moving average</b> takes the average of the last N values and slides forward, which smooths that noise and shows the real trend &mdash; this is why every stock chart has a 7-day or 50-day moving average. <b>Resampling</b> means changing the time level, for example daily data to monthly totals.</p>
 <pre><code>df['ma7'] = df['sales'].rolling(window=7).mean()   <span class="c"># 7-day moving average</span>
 df['sales'].rolling(3).sum()    df['sales'].expanding().mean()
 df['growth'] = df['sales'].pct_change()*100
@@ -976,6 +1051,8 @@ df.plot(subplots=True, layout=(2,2))</code></pre>
 
 <section>
 <h2 class="sec"><span class="n">3.1</span>Architecture + Figure / Axes / Axis</h2>
+<div class="box def"><div class="bt">Theory: why do we need charts at all?</div>
+<p>Numbers hide patterns. The famous proof is <b>Anscombe's Quartet</b> &mdash; four datasets with the <b>same mean, same variance and same correlation</b>, but when you plot them, one is a straight line, one is a curve, one has an outlier and one is a vertical cluster. Summary statistics alone can lie; a chart shows the truth. That is the standard answer to "why visualization?"</p></div>
 <div class="two">
 <div>
 <p><b>3 layers:</b></p>
@@ -1041,6 +1118,7 @@ plt.show()</code></pre></div>
 
 <section>
 <h2 class="sec"><span class="n">3.3</span>All Chart Types + When to Use</h2>
+<p class="lead"><b>Theory behind chart choice:</b> a chart turns a number into something the eye can see &mdash; a position, a length, an angle, an area, a colour or a size. These are called <b>encoding channels</b>. The eye reads <b>position and length very accurately</b>, but angle, area and colour only roughly. That single fact explains why bar and scatter charts are trusted and why pie charts and 3-D charts are discouraged.</p>
 <table class="fn">
 <tr><th style="width:165px">Function</th><th>Use when</th><th style="width:150px">Key parameters</th></tr>
 <tr><td>plt.plot(x,y)</td><td>Trend over a continuous/time axis</td><td>color, ls, lw, marker, label</td></tr>
@@ -1083,6 +1161,7 @@ plt.xlim(0,12); plt.xticks(rotation=45); plt.grid(alpha=.4); plt.show()</code></
 
 <section>
 <h2 class="sec"><span class="n">3.4</span>Subplots &amp; Layout</h2>
+<p class="lead">Putting many small charts side by side is called <b>small multiples</b>. It works because the reader learns the chart once and then only compares the shapes. Important rule: keep the same scale in all panels (<code>sharey=True</code>), otherwise the comparison is not fair.</p>
 <pre><code>fig, ax = plt.subplots(2, 2, figsize=(12,8), sharex=True, sharey=True)
 ax[0,0].plot(x,y);  ax[0,1].scatter(x,y);  ax[1,0].hist(d);  ax[1,1].bar(c,v)
 fig.suptitle('Dashboard')        <span class="c"># title of the WHOLE figure</span>
@@ -1243,6 +1322,7 @@ sns.lineplot(data=long_df, x='month', y='sales', hue='year')</code></pre>
 
 <section>
 <h2 class="sec"><span class="n">4.3</span>All Plots, Family by Family</h2>
+<p class="lead">Seaborn groups its plots into three families, and the family depends only on the <b>data type</b>: two numeric columns &rarr; <b>relational</b>; a category with a number &rarr; <b>categorical</b>; one numeric column alone &rarr; <b>distribution</b>. If you remember this, you can name the right function without memorising the list.</p>
 <h4>Relational (2 numeric columns)</h4>
 <table class="fn">
 <tr><th style="width:150px">Function</th><th>What it is used for</th><th style="width:155px">Key parameters</th></tr>
@@ -1270,6 +1350,9 @@ sns.lineplot(data=long_df, x='month', y='sales', hue='year')</code></pre>
 <tr><td>sns.rugplot</td><td>Small ticks for each observation, added under a KDE</td><td>height</td></tr>
 <tr><td>sns.displot</td><td>Figure-level: kind = hist / kde / ecdf</td><td>kind, col</td></tr>
 </table>
+<div class="box def"><div class="bt">Theory: KDE and the confidence interval band</div>
+<p><b>KDE</b> (Kernel Density Estimate) is a smooth histogram. Instead of putting values into bins, it places a small bell curve (the kernel) on every data point and adds them all up. The total area is 1, so the y-axis is <b>density</b>, not count. <code>bw</code> (bandwidth) controls smoothness &mdash; small bw gives a spiky curve, large bw hides the real shape.</p>
+<p>The shaded band in <code>lineplot</code> and the black line on <code>barplot</code> are both a <b>95% confidence interval</b>: Seaborn resamples the data many times (bootstrapping) and shows the range where the true mean most likely lies. A wide band means few samples or high variation, so do not trust that mean too much.</p></div>
 <div class="box trap"><div class="bt">distplot is removed</div><p>Old <code>sns.distplot()</code> is deprecated and removed. Use <code>sns.histplot(x, kde=True)</code> (axes-level) or <code>sns.displot(x, kde=True)</code> (figure-level). Saying this scores points.</p></div>
 <div class="box int"><div class="bt">Three comparisons they always ask</div>
 <p><b>strip vs swarm:</b> random jitter (can overlap, fast) vs computed positions (no overlap, slow).<br>
@@ -1322,7 +1405,7 @@ sns.reset_defaults()</code></pre>
 <div class="part-head">
   <div class="pk">Part 5</div>
   <h1>Rapid-Fire Interview Q&amp;A</h1>
-  <p>45 real questions. Short answers, the way you can actually speak them.</p>
+  <p>88 real questions in two rounds. Short answers, the way you can actually speak them.</p>
 </div>
 
 <section>
@@ -1380,91 +1463,220 @@ sns.reset_defaults()</code></pre>
 <div class="qa"><p class="q">45. Walk me through your EDA process.</p><p class="a">Load with read_csv, then shape, info, describe and isnull().sum(). Clean: fix dtypes, missing values, duplicates, messy text. Then univariate charts (histplot, countplot, boxplot for outliers), then bivariate (scatterplot, boxplot by category, correlation heatmap), then multivariate with hue or faceting and pairplot on the important columns. Finally I write down the findings that matter for the business question.</p></div>
 </section>
 
+<section>
+<h2 class="sec"><span class="n">5B</span>More Rapid-Fire Questions (46&ndash;88)</h2>
+<p class="lead">Short questions, short answers. Read these out loud once &mdash; that is enough.</p>
+
+<h3>NumPy &mdash; extra</h3>
+<div class="qa"><p class="q">46. What is an ndarray?</p><p class="a">A grid of values of the <b>same type</b>, with a fixed shape, stored together in memory. "nd" means n-dimensional.</p></div>
+<div class="qa"><p class="q">47. Why must all items have the same type?</p><p class="a">Because then every item takes the same number of bytes, so NumPy can jump straight to any item and run the loop in C without checking types.</p></div>
+<div class="qa"><p class="q">48. What does reshape(-1) mean?</p><p class="a">&minus;1 means "you figure out this number". <code>a.reshape(2,-1)</code> keeps 2 rows and NumPy calculates the columns.</p></div>
+<div class="qa"><p class="q">49. Difference between np.zeros and np.empty?</p><p class="a">zeros fills with 0; empty does not fill anything, so it holds garbage values but is faster. Use empty only when you will overwrite everything.</p></div>
+<div class="qa"><p class="q">50. How do you find the position of the maximum value?</p><p class="a"><code>a.argmax()</code>. <code>a.max()</code> gives the value, <code>argmax</code> gives the index.</p></div>
+<div class="qa"><p class="q">51. How do you get unique values with their counts?</p><p class="a"><code>np.unique(a, return_counts=True)</code> &mdash; it returns the unique values and how many times each one appears.</p></div>
+<div class="qa"><p class="q">52. What is np.linspace used for in real work?</p><p class="a">Making the x-values for a plot, because you get exactly the number of points you asked for, including the end point.</p></div>
+<div class="qa"><p class="q">53. Why do we set a random seed?</p><p class="a">So the same random numbers come every time. Without it, results change on every run and nobody can reproduce your work.</p></div>
+<div class="qa"><p class="q">54. What does np.clip do?</p><p class="a">It forces values into a range &mdash; anything below the minimum becomes the minimum, anything above the maximum becomes the maximum. Used to cap outliers.</p></div>
+<div class="qa"><p class="q">55. How do you normalize every column of a 2-D array in one line?</p><p class="a"><code>(a - a.mean(axis=0)) / a.std(axis=0)</code> &mdash; broadcasting applies each column's mean and std down that column.</p></div>
+
+<h3>Pandas &mdash; extra</h3>
+<div class="qa"><p class="q">56. Difference between <code>df['a']</code> and <code>df[['a']]</code>?</p><p class="a">Single brackets give a <b>Series</b> (one column), double brackets give a <b>DataFrame</b> (a table with one column).</p></div>
+<div class="qa"><p class="q">57. What does inplace=True do, and do you use it?</p><p class="a">It changes the DataFrame directly instead of returning a new one. I avoid it &mdash; it makes chaining impossible, it is being deprecated, and <code>df = df.something()</code> is clearer.</p></div>
+<div class="qa"><p class="q">58. How do you add a new column?</p><p class="a"><code>df['new'] = df['a'] * 2</code>, or <code>df.assign(new=...)</code> if I want to keep chaining, or <code>np.where(cond, x, y)</code> for an if-else column.</p></div>
+<div class="qa"><p class="q">59. How do you delete a column or a row?</p><p class="a"><code>df.drop(columns=['a'])</code> for a column and <code>df.drop(index=[0,1])</code> for rows. Remember to assign the result back.</p></div>
+<div class="qa"><p class="q">60. How do you rename columns?</p><p class="a"><code>df.rename(columns={'old':'new'})</code>. Assigning <code>df.columns = [...]</code> also works but you must give every name.</p></div>
+<div class="qa"><p class="q">61. How do you find and remove duplicate rows?</p><p class="a"><code>df.duplicated().sum()</code> to count them, then <code>df.drop_duplicates(subset=['id'], keep='first')</code>. I always look at them before deleting.</p></div>
+<div class="qa"><p class="q">62. How do you get the top 3 salaries?</p><p class="a"><code>df.nlargest(3, 'salary')</code>, or <code>df.sort_values('salary', ascending=False).head(3)</code>.</p></div>
+<div class="qa"><p class="q">63. How do you find the top earner of each department?</p><p class="a"><code>df.sort_values('salary', ascending=False).groupby('dept').head(1)</code>, or use <code>idxmax</code> with <code>.loc</code>.</p></div>
+<div class="qa"><p class="q">64. How do you count missing values per column?</p><p class="a"><code>df.isnull().sum()</code>. For percentage: <code>df.isnull().mean()*100</code>.</p></div>
+<div class="qa"><p class="q">65. What is the difference between <code>df.size</code> and <code>df.shape</code>?</p><p class="a"><code>shape</code> gives (rows, columns); <code>size</code> gives the total number of cells, that is rows &times; columns.</p></div>
+<div class="qa"><p class="q">66. What does <code>axis=1</code> mean in <code>df.drop(..., axis=1)</code>?</p><p class="a">It means work along the columns, so it drops a column. Same axis rule as NumPy: axis=0 is rows, axis=1 is columns.</p></div>
+<div class="qa"><p class="q">67. How do you convert a column to date and then get the month?</p><p class="a"><code>df['d'] = pd.to_datetime(df['d'])</code> and then <code>df['d'].dt.month</code>. Without converting first, <code>.dt</code> will not work.</p></div>
+<div class="qa"><p class="q">68. How do you combine first_name and last_name?</p><p class="a"><code>df['full'] = df['first'] + ' ' + df['last']</code> &mdash; string columns add up directly.</p></div>
+<div class="qa"><p class="q">69. What is a MultiIndex?</p><p class="a">An index with more than one level, which you get after grouping by two columns. <code>reset_index()</code> turns those levels back into normal columns.</p></div>
+<div class="qa"><p class="q">70. How do you apply a function to every row?</p><p class="a"><code>df.apply(func, axis=1)</code>. But I first check whether a vectorized version exists, because apply is slow.</p></div>
+<div class="qa"><p class="q">71. How do you read only 1000 rows of a huge file to test your code?</p><p class="a"><code>pd.read_csv('f.csv', nrows=1000)</code>.</p></div>
+<div class="qa"><p class="q">72. Your merge produced NaN values. What happened?</p><p class="a">Some keys had no match on the other side and I used a left or outer join. I check the key spelling and spaces, and use <code>indicator=True</code> to see which rows matched.</p></div>
+
+<h3>Statistics &amp; EDA</h3>
+<div class="qa"><p class="q">73. Mean, median or mode &mdash; which one and when?</p><p class="a">Mean for clean numeric data, median when outliers or skew exist, mode for categories or the most common value.</p></div>
+<div class="qa"><p class="q">74. What is skewness and how do you see it in a chart?</p><p class="a">It means the distribution is tilted to one side. In a histogram, a long tail on the right is right/positive skew (like income) and the mean sits to the right of the median.</p></div>
+<div class="qa"><p class="q">75. How do you detect outliers?</p><p class="a">The IQR rule &mdash; anything below Q1 &minus; 1.5&times;IQR or above Q3 + 1.5&times;IQR &mdash; shown directly by a box plot. The z-score method (beyond about 3 standard deviations) is the other way.</p></div>
+<div class="qa"><p class="q">76. Should you always remove outliers?</p><p class="a">No. First check if it is a data entry error or a genuine rare case. A real outlier like one huge order is valuable information, so I may cap it instead of deleting it.</p></div>
+<div class="qa"><p class="q">77. Variance vs standard deviation?</p><p class="a">Both measure spread. Variance is the average squared distance from the mean, so its unit is squared; standard deviation is its square root, so it is in the same unit as the data and easier to explain.</p></div>
+<div class="qa"><p class="q">78. What does a bimodal histogram tell you?</p><p class="a">That two different groups are mixed inside one column &mdash; for example male and female heights together. I would split the data by that category.</p></div>
+<div class="qa"><p class="q">79. What is normalization vs standardization?</p><p class="a">Normalization squeezes values into 0 to 1 using min-max. Standardization makes the mean 0 and the standard deviation 1 using the z-score. Both are done so that one large-valued column does not dominate the model.</p></div>
+<div class="qa"><p class="q">80. What is class imbalance and how do you spot it?</p><p class="a">One category has far more rows than the other, like 95% "no fraud". I spot it with <code>value_counts(normalize=True)</code> or a countplot. If it is ignored, the model looks accurate but learns nothing.</p></div>
+
+<h3>Charts &mdash; extra</h3>
+<div class="qa"><p class="q">81. Which chart would you use to compare sales of 5 cities?</p><p class="a">A bar chart, horizontal if the city names are long. One categorical column with one numeric value &mdash; that is a bar chart.</p></div>
+<div class="qa"><p class="q">82. Which chart shows sales trend over 24 months?</p><p class="a">A line plot, because the x-axis is time and ordered. I would add a rolling average line if the data is noisy.</p></div>
+<div class="qa"><p class="q">83. How would you compare salary distribution across 4 departments?</p><p class="a">A boxplot with department on x and salary on y, or a violin plot if I also want the shape. I may overlay a stripplot to show how many employees each group has.</p></div>
+<div class="qa"><p class="q">84. What is a bubble chart?</p><p class="a">A scatter plot where the dot size shows a third numeric variable, done with the <code>s</code> parameter in <code>plt.scatter</code> or <code>size=</code> in Seaborn.</p></div>
+<div class="qa"><p class="q">85. How do you make a chart readable for a non-technical audience?</p><p class="a">A title that states the finding, labelled axes with units, few colours, no 3-D effects, bars starting at 0, and the key number written directly on the chart.</p></div>
+
+<h3>Scenario questions</h3>
+<div class="qa"><p class="q">86. You are given a messy sales CSV. What are your first 10 minutes?</p><p class="a">Load it, check shape, head, info and describe. Count missing values and duplicates. Fix the data types, especially dates and numbers stored as text. Clean the text columns with strip and lower, then check value_counts for spelling mistakes. Only after that I start analysing.</p></div>
+<div class="qa"><p class="q">87. Your groupby result has fewer rows than expected. Why?</p><p class="a">Most likely the grouping column has NaN values, and groupby drops them by default. I pass <code>dropna=False</code> to keep them as their own group.</p></div>
+<div class="qa"><p class="q">88. The same code works in your notebook but gives a different result on the full data. What do you check?</p><p class="a">Whether I tested on a sample, whether new categories or missing values appeared in the full data, whether data types changed while reading, and whether any merge created duplicate rows.</p></div>
+</section>
+
 <!-- ============ PART 6: CHEAT SHEET ============ -->
 <div class="part-head">
   <div class="pk">Part 6</div>
   <h1>Master Cheat Sheet</h1>
-  <p>Last 20 minutes before the interview &mdash; read only this.</p>
+  <p>Written as "I want to do this &rarr; write that". Last 20 minutes before the interview, read only this part.</p>
 </div>
 
 <section>
-<div class="sheet">
-<div class="two">
-<div>
-<h4 style="color:#1f77b4">NumPy</h4>
-<pre><code>np.array/zeros/ones/full/eye/arange/linspace
-np.random.seed/rand/randn/randint/choice
-a.shape a.ndim a.size a.dtype a.T a.astype(float)
-a[1:4]  m[:,1]  m[0:2,1:3]   # slice = VIEW
-a[[0,2]]      fancy  -> copy
-a[a&gt;5]        boolean -> copy
-np.where(cond, x, y)
-sum mean median std var  (axis=0 col, axis=1 row)
-max/argmax min/argmin cumsum sort argsort unique
-A @ B  np.linalg.inv/det/solve/eig/norm
-reshape(-1) ravel(view) flatten(copy) newaxis squeeze
-concatenate vstack hstack split
-BROADCAST: compare from right; equal or 1
-np.isnan np.nanmean np.percentile np.clip
-np.save/load  np.savetxt/loadtxt</code></pre>
-<h4 style="color:#1f7a5a">Matplotlib</h4>
-<pre><code>fig, ax = plt.subplots(2,2, figsize=(12,8), sharey=True)
-ax.plot scatter bar barh hist pie boxplot violinplot
-   stackplot fill_between errorbar hexbin imshow
-ax.set_title/xlabel/ylabel/xlim/xticks/yscale
-ax.legend(loc='best')   fig.suptitle('all')
-plt.tight_layout()
-plt.annotate('s', xy=(x,y), xytext=(a,b),
-             arrowprops=dict(arrowstyle='-&gt;'))
-ax2 = ax.twinx()    ax.spines['top'].set_visible(False)
-gridspec.GridSpec(2,2, height_ratios=[2,1])
-plt.style.use('ggplot'); plt.rcParams[...]
-cmap: viridis(seq) coolwarm(div) tab10(cat)
-plt.savefig('a.png', dpi=300, bbox_inches='tight')
-   # BEFORE plt.show()</code></pre>
-</div>
-<div>
-<h4 style="color:#b4530a">Pandas</h4>
-<pre><code>pd.read_csv(f, usecols=, dtype=, parse_dates=, na_values=)
-df.head/tail/sample/shape/info/describe/dtypes
-df.isnull().sum()  df.nunique()  df.duplicated().sum()
-df['a']   df[['a','b']]   df.iloc[0:5,1:3]
-df.loc[df.age&gt;25, ['name','city']]       # end INCLUDED
-df[(c1) &amp; (c2)]  isin  between  str.contains  query
-df['c'].value_counts(normalize=True)
-df.sort_values(['a','b'], ascending=[1,0])
-df.drop_duplicates(subset=, keep='first')
-df.groupby('k')['v'].mean()
-   .agg(avg=('v','mean'))  .transform('mean')  .size()
-pd.merge(a,b,on='k',how='left')  pd.concat([a,b])
-df.pivot_table(index=,columns=,values=,aggfunc=)
-pd.crosstab(a,b)   df.melt(id_vars=)
-df.corr(numeric_only=True)
-df.rename(columns={}) set_index() reset_index(drop=True)
-df.dropna(subset=) fillna(median) ffill() interpolate()
-astype('category') pd.to_numeric(errors='coerce')
-   pd.to_datetime()
-map apply assign cut qcut explode np.where
-rolling(7).mean() shift(1) pct_change() resample('M')
-df.to_csv('o.csv', index=False)</code></pre>
-<h4 style="color:#7a2f8f">Seaborn</h4>
-<pre><code>FIGURE-level: relplot displot catplot lmplot
-  jointplot pairplot  -&gt; Grid, height+aspect, col/row
-AXES-level: scatter line hist kde ecdf strip swarm box
-  violin boxen bar count point reg heatmap -&gt; ax=
-sns.scatterplot(data=,x=,y=,hue=,size=,style=)
-sns.lineplot(..., errorbar=None)
-sns.boxplot/violinplot(x=,y=,hue=,split=True)
-sns.barplot(estimator='mean')  sns.countplot(x=)
-sns.histplot(x=,bins=,kde=True)  sns.kdeplot(fill=True)
-sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
-sns.pairplot(df, hue=, corner=True)
-sns.set_theme(style='whitegrid', context='talk')
-   style: darkgrid whitegrid dark white ticks
-   context: paper notebook talk poster</code></pre>
-</div>
-</div>
-</div>
+<h3>How to read this cheat sheet</h3>
+<p>Left column = <b>what you want to do, in plain words</b>. Right column = <b>the code to write</b>. Find your sentence on the left, copy the code on the right.</p>
+
+<h4 style="color:#1f77b4;font-size:11pt;margin-top:12px">NumPy</h4>
+<table class="fn">
+<tr><th style="width:250px">I want to...</th><th>Write this</th></tr>
+<tr><td style="font-family:inherit">make an array from a list</td><td>np.array([1,2,3])</td></tr>
+<tr><td style="font-family:inherit">make an empty table of 0s / 1s</td><td>np.zeros((2,3)) &nbsp; np.ones((2,3))</td></tr>
+<tr><td style="font-family:inherit">make numbers 0 to 10 jumping by 2</td><td>np.arange(0,10,2)</td></tr>
+<tr><td style="font-family:inherit">make exactly 50 points between 0 and 1</td><td>np.linspace(0,1,50)</td></tr>
+<tr><td style="font-family:inherit">make random numbers (same every run)</td><td>np.random.seed(42); np.random.rand(3)</td></tr>
+<tr><td style="font-family:inherit">know rows and columns</td><td>a.shape</td></tr>
+<tr><td style="font-family:inherit">know the data type / change it</td><td>a.dtype &nbsp; a.astype(float)</td></tr>
+<tr><td style="font-family:inherit">take one full column of a 2-D array</td><td>m[:, 1]</td></tr>
+<tr><td style="font-family:inherit">take rows 0&ndash;1 and columns 1&ndash;2</td><td>m[0:2, 1:3]</td></tr>
+<tr><td style="font-family:inherit">pick specific positions (0, 3, 5)</td><td>a[[0,3,5]]</td></tr>
+<tr><td style="font-family:inherit">keep only values bigger than 50</td><td>a[a &gt; 50]</td></tr>
+<tr><td style="font-family:inherit">keep values between 20 and 80</td><td>a[(a &gt; 20) &amp; (a &lt; 80)]</td></tr>
+<tr><td style="font-family:inherit">write if-else on the whole array</td><td>np.where(a &gt; 50, 'pass', 'fail')</td></tr>
+<tr><td style="font-family:inherit">get a real copy, not a linked view</td><td>b = a[1:4].copy()</td></tr>
+<tr><td style="font-family:inherit">total / average of each column</td><td>a.sum(axis=0) &nbsp; a.mean(axis=0)</td></tr>
+<tr><td style="font-family:inherit">average of each row</td><td>a.mean(axis=1)</td></tr>
+<tr><td style="font-family:inherit">biggest value / its position</td><td>a.max() &nbsp; a.argmax()</td></tr>
+<tr><td style="font-family:inherit">sort the values</td><td>np.sort(a)</td></tr>
+<tr><td style="font-family:inherit">unique values and how many times each</td><td>np.unique(a, return_counts=True)</td></tr>
+<tr><td style="font-family:inherit">change shape to 3 rows (auto columns)</td><td>a.reshape(3,-1)</td></tr>
+<tr><td style="font-family:inherit">make it a single flat line</td><td>a.ravel() &nbsp;&nbsp;<span style="font-family:inherit">(copy: a.flatten())</span></td></tr>
+<tr><td style="font-family:inherit">join two arrays / split one</td><td>np.vstack([a,b]) &nbsp; np.split(a,3)</td></tr>
+<tr><td style="font-family:inherit">multiply two matrices</td><td>A @ B</td></tr>
+<tr><td style="font-family:inherit">make every column mean 0, std 1</td><td>(a - a.mean(axis=0)) / a.std(axis=0)</td></tr>
+<tr><td style="font-family:inherit">find / ignore missing values</td><td>np.isnan(a) &nbsp; np.nanmean(a)</td></tr>
+<tr><td style="font-family:inherit">get quartiles (25%, 50%, 75%)</td><td>np.percentile(a, [25,50,75])</td></tr>
+</table>
+
+<h4 style="color:#b4530a;font-size:11pt;margin-top:12px">Pandas</h4>
+<table class="fn">
+<tr><th style="width:250px">I want to...</th><th>Write this</th></tr>
+<tr><td style="font-family:inherit">read a CSV file</td><td>df = pd.read_csv('f.csv')</td></tr>
+<tr><td style="font-family:inherit">read only some columns</td><td>pd.read_csv('f.csv', usecols=['a','b'])</td></tr>
+<tr><td style="font-family:inherit">read a date column properly</td><td>pd.read_csv('f.csv', parse_dates=['date'])</td></tr>
+<tr><td style="font-family:inherit">see the first rows / a random sample</td><td>df.head() &nbsp; df.sample(5)</td></tr>
+<tr><td style="font-family:inherit">see types and missing counts together</td><td>df.info()</td></tr>
+<tr><td style="font-family:inherit">see mean, min, max of all numeric columns</td><td>df.describe()</td></tr>
+<tr><td style="font-family:inherit">count missing values in each column</td><td>df.isnull().sum()</td></tr>
+<tr><td style="font-family:inherit">take one column / many columns</td><td>df['a'] &nbsp; df[['a','b']]</td></tr>
+<tr><td style="font-family:inherit">take rows by position (first 5)</td><td>df.iloc[0:5]</td></tr>
+<tr><td style="font-family:inherit">take rows by label / condition</td><td>df.loc[df.age &gt; 25, ['name','city']]</td></tr>
+<tr><td style="font-family:inherit">filter on two conditions</td><td>df[(df.age &gt; 25) &amp; (df.city == 'Delhi')]</td></tr>
+<tr><td style="font-family:inherit">filter where value is in a list</td><td>df[df.city.isin(['Delhi','Pune'])]</td></tr>
+<tr><td style="font-family:inherit">filter where text contains something</td><td>df[df.name.str.contains('an', na=False)]</td></tr>
+<tr><td style="font-family:inherit">count how many of each category</td><td>df['city'].value_counts()</td></tr>
+<tr><td style="font-family:inherit">get the percentage share instead</td><td>df['city'].value_counts(normalize=True)</td></tr>
+<tr><td style="font-family:inherit">sort by salary, highest first</td><td>df.sort_values('salary', ascending=False)</td></tr>
+<tr><td style="font-family:inherit">get the top 3 rows by a column</td><td>df.nlargest(3, 'salary')</td></tr>
+<tr><td style="font-family:inherit">remove duplicate rows</td><td>df.drop_duplicates(subset=['id'])</td></tr>
+<tr><td style="font-family:inherit">average salary per department</td><td>df.groupby('dept')['salary'].mean()</td></tr>
+<tr><td style="font-family:inherit">many calculations per group</td><td>df.groupby('dept').agg(avg=('salary','mean'), n=('salary','count'))</td></tr>
+<tr><td style="font-family:inherit">put the group average on every row</td><td>df.groupby('dept')['salary'].transform('mean')</td></tr>
+<tr><td style="font-family:inherit">join two tables on a common column</td><td>pd.merge(a, b, on='id', how='left')</td></tr>
+<tr><td style="font-family:inherit">stack two tables one below the other</td><td>pd.concat([a, b], ignore_index=True)</td></tr>
+<tr><td style="font-family:inherit">make an Excel-style pivot table</td><td>df.pivot_table(index='team', columns='year', values='runs', aggfunc='mean')</td></tr>
+<tr><td style="font-family:inherit">count table of two categories</td><td>pd.crosstab(df.team, df.result)</td></tr>
+<tr><td style="font-family:inherit">check which columns relate to each other</td><td>df.corr(numeric_only=True)</td></tr>
+<tr><td style="font-family:inherit">rename a column</td><td>df.rename(columns={'old':'new'})</td></tr>
+<tr><td style="font-family:inherit">make a column the row label / undo it</td><td>df.set_index('id') &nbsp; df.reset_index(drop=True)</td></tr>
+<tr><td style="font-family:inherit">drop rows where salary is missing</td><td>df.dropna(subset=['salary'])</td></tr>
+<tr><td style="font-family:inherit">fill missing age with the median</td><td>df['age'].fillna(df['age'].median())</td></tr>
+<tr><td style="font-family:inherit">fill forward (time series)</td><td>df.ffill()</td></tr>
+<tr><td style="font-family:inherit">convert text to number / to date</td><td>pd.to_numeric(df.a, errors='coerce') &nbsp; pd.to_datetime(df.d)</td></tr>
+<tr><td style="font-family:inherit">save memory on a repeated text column</td><td>df['city'] = df['city'].astype('category')</td></tr>
+<tr><td style="font-family:inherit">make a new if-else column</td><td>df['tag'] = np.where(df.age &gt; 30, 'old', 'young')</td></tr>
+<tr><td style="font-family:inherit">turn a number column into groups</td><td>pd.cut(df.age, bins=[0,18,35,60], labels=['kid','young','old'])</td></tr>
+<tr><td style="font-family:inherit">make 4 equal-sized groups</td><td>pd.qcut(df.salary, 4)</td></tr>
+<tr><td style="font-family:inherit">7-day moving average</td><td>df['sales'].rolling(7).mean()</td></tr>
+<tr><td style="font-family:inherit">month-wise total from daily data</td><td>df.set_index('date').resample('M').sum()</td></tr>
+<tr><td style="font-family:inherit">save the result to CSV</td><td>df.to_csv('out.csv', index=False)</td></tr>
+</table>
+
+<h4 style="color:#1f7a5a;font-size:11pt;margin-top:12px">Matplotlib</h4>
+<table class="fn">
+<tr><th style="width:250px">I want to...</th><th>Write this</th></tr>
+<tr><td style="font-family:inherit">start one chart</td><td>fig, ax = plt.subplots(figsize=(8,4))</td></tr>
+<tr><td style="font-family:inherit">start a 2&times;2 grid of charts</td><td>fig, ax = plt.subplots(2, 2, figsize=(12,8))</td></tr>
+<tr><td style="font-family:inherit">draw a trend line</td><td>ax.plot(x, y, color='b', ls='--', marker='o', label='2024')</td></tr>
+<tr><td style="font-family:inherit">draw dots for 2 numeric columns</td><td>ax.scatter(x, y, c=z, s=sizes, alpha=.6)</td></tr>
+<tr><td style="font-family:inherit">draw bars (vertical / horizontal)</td><td>ax.bar(cat, val) &nbsp; ax.barh(cat, val)</td></tr>
+<tr><td style="font-family:inherit">see the distribution of one column</td><td>ax.hist(values, bins=30, edgecolor='black')</td></tr>
+<tr><td style="font-family:inherit">see outliers of one column</td><td>ax.boxplot(values)</td></tr>
+<tr><td style="font-family:inherit">add title and axis names</td><td>ax.set_title('t'); ax.set_xlabel('x'); ax.set_ylabel('y')</td></tr>
+<tr><td style="font-family:inherit">show the legend</td><td>ax.legend(loc='best') &nbsp;<span style="font-family:inherit">(needs label= in the plot)</span></td></tr>
+<tr><td style="font-family:inherit">rotate crowded x labels</td><td>plt.xticks(rotation=45)</td></tr>
+<tr><td style="font-family:inherit">fix overlapping labels</td><td>plt.tight_layout()</td></tr>
+<tr><td style="font-family:inherit">one title for the whole figure</td><td>fig.suptitle('Dashboard')</td></tr>
+<tr><td style="font-family:inherit">point an arrow at a value</td><td>ax.annotate('peak', xy=(5,25), xytext=(7,30), arrowprops=dict(arrowstyle='-&gt;'))</td></tr>
+<tr><td style="font-family:inherit">draw a target line across the chart</td><td>ax.axhline(50, color='red', ls='--')</td></tr>
+<tr><td style="font-family:inherit">use a second y-axis (different unit)</td><td>ax2 = ax.twinx()</td></tr>
+<tr><td style="font-family:inherit">remove the top and right border</td><td>ax.spines['top'].set_visible(False)</td></tr>
+<tr><td style="font-family:inherit">change the whole look in one line</td><td>plt.style.use('ggplot')</td></tr>
+<tr><td style="font-family:inherit">set a default figure size for all charts</td><td>plt.rcParams['figure.figsize'] = (10,5)</td></tr>
+<tr><td style="font-family:inherit">save the chart (do this BEFORE show)</td><td>plt.savefig('c.png', dpi=300, bbox_inches='tight')</td></tr>
+</table>
+
+<h4 style="color:#7a2f8f;font-size:11pt;margin-top:12px">Seaborn</h4>
+<table class="fn">
+<tr><th style="width:250px">I want to...</th><th>Write this</th></tr>
+<tr><td style="font-family:inherit">set a nice theme once</td><td>sns.set_theme(style='whitegrid')</td></tr>
+<tr><td style="font-family:inherit">dots for 2 numeric columns, coloured by a category</td><td>sns.scatterplot(data=df, x='bill', y='tip', hue='sex')</td></tr>
+<tr><td style="font-family:inherit">trend line with a confidence band</td><td>sns.lineplot(data=df, x='day', y='sales')</td></tr>
+<tr><td style="font-family:inherit">remove that shaded band</td><td>sns.lineplot(..., errorbar=None)</td></tr>
+<tr><td style="font-family:inherit">count of each category</td><td>sns.countplot(data=df, x='class')</td></tr>
+<tr><td style="font-family:inherit">average per category with error bars</td><td>sns.barplot(data=df, x='day', y='bill')</td></tr>
+<tr><td style="font-family:inherit">compare spread across groups</td><td>sns.boxplot(data=df, x='day', y='bill')</td></tr>
+<tr><td style="font-family:inherit">same, but also show the shape</td><td>sns.violinplot(data=df, x='day', y='bill', split=True, hue='sex')</td></tr>
+<tr><td style="font-family:inherit">show every single data point</td><td>sns.stripplot(..., jitter=.25) &nbsp;<span style="font-family:inherit">or swarmplot</span></td></tr>
+<tr><td style="font-family:inherit">distribution of one numeric column</td><td>sns.histplot(data=df, x='bill', bins=30, kde=True)</td></tr>
+<tr><td style="font-family:inherit">smooth density curve only</td><td>sns.kdeplot(data=df, x='bill', fill=True)</td></tr>
+<tr><td style="font-family:inherit">correlation heatmap</td><td>sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='coolwarm', vmin=-1, vmax=1)</td></tr>
+<tr><td style="font-family:inherit">all columns against all columns</td><td>sns.pairplot(df, hue='target', corner=True)</td></tr>
+<tr><td style="font-family:inherit">scatter plus side distributions</td><td>sns.jointplot(data=df, x='bill', y='tip', kind='hex')</td></tr>
+<tr><td style="font-family:inherit">scatter with a regression line</td><td>sns.regplot(data=df, x='bill', y='tip')</td></tr>
+<tr><td style="font-family:inherit">one separate panel per category</td><td>sns.catplot(data=df, x='day', y='bill', kind='box', col='sex')</td></tr>
+<tr><td style="font-family:inherit">put a seaborn plot inside my own subplot</td><td>sns.boxplot(..., ax=ax[0,0]) &nbsp;<span style="font-family:inherit">(axes-level only)</span></td></tr>
+<tr><td style="font-family:inherit">make a figure-level plot bigger</td><td>sns.catplot(..., height=5, aspect=2) &nbsp;<span style="font-family:inherit">(not figsize)</span></td></tr>
+</table>
+
+<h3>20 Golden Rules (remember these, not the syntax)</h3>
+<table>
+<tr><td style="width:20px"><b>1</b></td><td><b>axis = the direction that disappears.</b> axis=0 works down the rows (answer per column), axis=1 works across the columns (answer per row).</td></tr>
+<tr><td><b>2</b></td><td>A NumPy <b>slice is a view</b> (shared memory); fancy and boolean indexing give copies. Use <code>.copy()</code> when in doubt.</td></tr>
+<tr><td><b>3</b></td><td>In filters use <code>&amp;</code> <code>|</code> <code>~</code> with brackets &mdash; never <code>and</code> / <code>or</code>.</td></tr>
+<tr><td><b>4</b></td><td><code>loc</code> = by name, end <b>included</b>. <code>iloc</code> = by position, end <b>excluded</b>.</td></tr>
+<tr><td><b>5</b></td><td>To change values use <code>df.loc[mask, 'col'] = x</code>, never <code>df[mask]['col'] = x</code>.</td></tr>
+<tr><td><b>6</b></td><td>Pandas returns a <b>new</b> object &mdash; assign it back: <code>df = df.dropna()</code>.</td></tr>
+<tr><td><b>7</b></td><td>Broadcasting: compare shapes from the right; each pair must be equal or one must be 1.</td></tr>
+<tr><td><b>8</b></td><td><code>*</code> is element-wise, <code>@</code> is matrix multiplication.</td></tr>
+<tr><td><b>9</b></td><td><code>max</code> gives the value, <code>argmax</code> gives the position.</td></tr>
+<tr><td><b>10</b></td><td>groupby = <b>split &rarr; apply &rarr; combine</b>. <code>agg</code> shrinks rows, <code>transform</code> keeps the same rows.</td></tr>
+<tr><td><b>11</b></td><td>After a merge, <b>always check the row count</b>. More rows than before means a duplicated key.</td></tr>
+<tr><td><b>12</b></td><td>Fill with <b>median</b> when outliers exist, mean only on clean data, mode for text.</td></tr>
+<tr><td><b>13</b></td><td><code>NaN == NaN</code> is False. Always use <code>isnull()</code> / <code>isnan()</code>.</td></tr>
+<tr><td><b>14</b></td><td>Histogram = numeric ranges (bars touch). Bar chart = categories (bars have gaps).</td></tr>
+<tr><td><b>15</b></td><td>Bar chart y-axis <b>must start at 0</b>; line charts need not.</td></tr>
+<tr><td><b>16</b></td><td><code>savefig()</code> comes <b>before</b> <code>show()</code>, otherwise the image is blank.</td></tr>
+<tr><td><b>17</b></td><td>Seaborn: axes-level takes <code>ax=</code> and <code>figsize</code>; figure-level takes <code>col/row</code> and <code>height/aspect</code>.</td></tr>
+<tr><td><b>18</b></td><td>Seaborn needs <b>long (tidy)</b> data for <code>hue</code> &mdash; one row = one observation. Use <code>melt()</code> if it is wide.</td></tr>
+<tr><td><b>19</b></td><td>Prefer vectorized code over <code>apply</code>, and <code>apply</code> over <code>iterrows</code>.</td></tr>
+<tr><td><b>20</b></td><td>Correlation is <b>never</b> proof of cause.</td></tr>
+</table>
 
 <h3>Top 15 Mistakes (avoid these and you are already ahead)</h3>
 <table>
