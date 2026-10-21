@@ -1,0 +1,1138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Matplotlib Complete Revision Guide</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ================= COVER ================= -->
+<div class="cover">
+  <div class="kicker">Placement Interview Revision</div>
+  <h1>Matplotlib<br>Complete Revision Guide</h1>
+  <div class="rule"></div>
+  <h2>Every topic, simple explanation, diagrams, code and real interview questions &mdash; in one place.</h2>
+  <div class="badges">
+    <span class="badge">21 Topics</span>
+    <span class="badge">Diagrams</span>
+    <span class="badge">Code Snippets</span>
+    <span class="badge">Interview Traps</span>
+    <span class="badge">30 Q&amp;A</span>
+  </div>
+  <div class="box def">
+    <div class="bt">How to use this doc</div>
+    <p><b>Before solving questions:</b> read the topic + its "In interview, say this" box. That is enough to answer 90% theory questions.</p>
+    <p><b>Night before interview:</b> read only the green boxes, the tables, and Topic 20 (cheat sheet) + Topic 21 (Q&amp;A).</p>
+  </div>
+  <div class="meta">Revision notes &mdash; Data Visualization with Matplotlib &nbsp;·&nbsp; Companion doc: <b>Seaborn Complete Revision Guide</b></div>
+</div>
+
+<!-- ================= TOC ================= -->
+<section class="cont">
+<h2 class="sec"><span class="n">#</span>Contents</h2>
+<div class="toc">
+  <div class="ti"><span class="i">1</span><span>What is Matplotlib + Architecture</span></div>
+  <div class="ti"><span class="i">2</span><span>Anatomy of a Plot (Figure, Axes, Axis)</span></div>
+  <div class="ti"><span class="i">3</span><span>Two Interfaces: pyplot vs Object-Oriented</span></div>
+  <div class="ti"><span class="i">4</span><span>Line Plot + All Customization</span></div>
+  <div class="ti"><span class="i">5</span><span>Scatter Plot</span></div>
+  <div class="ti"><span class="i">6</span><span>Bar Chart (grouped, stacked, horizontal)</span></div>
+  <div class="ti"><span class="i">7</span><span>Histogram</span></div>
+  <div class="ti"><span class="i">8</span><span>Pie Chart</span></div>
+  <div class="ti"><span class="i">9</span><span>Box Plot &amp; Other Statistical Plots</span></div>
+  <div class="ti"><span class="i">10</span><span>Which Chart to Use When</span></div>
+  <div class="ti"><span class="i">11</span><span>Subplots &amp; Layout (4 ways + GridSpec)</span></div>
+  <div class="ti"><span class="i">12</span><span>Colors, Colormaps, Styles, rcParams</span></div>
+  <div class="ti"><span class="i">13</span><span>Text, Annotation &amp; Legend Control</span></div>
+  <div class="ti"><span class="i">14</span><span>Axis Control: limits, ticks, spines, twin, log</span></div>
+  <div class="ti"><span class="i">15</span><span>Images &amp; Heatmap with imshow</span></div>
+  <div class="ti"><span class="i">16</span><span>3D Plotting</span></div>
+  <div class="ti"><span class="i">17</span><span>Saving Figures, DPI &amp; Backends</span></div>
+  <div class="ti"><span class="i">18</span><span>Animation (FuncAnimation)</span></div>
+  <div class="ti"><span class="i">19</span><span>Matplotlib vs Seaborn vs Plotly</span></div>
+  <div class="ti"><span class="i">20</span><span>Common Errors + Cheat Sheet</span></div>
+  <div class="ti"><span class="i">21</span><span>Real Interview Questions &amp; Answers</span></div>
+</div>
+
+<h3>The 6 things interviewers always ask about Matplotlib</h3>
+<table class="tight">
+<tr><th style="width:30px">#</th><th>Question area</th><th>Where in this doc</th></tr>
+<tr><td>1</td><td>Difference between Figure, Axes and Axis</td><td>Topic 2</td></tr>
+<tr><td>2</td><td>pyplot interface vs Object-Oriented interface</td><td>Topic 3</td></tr>
+<tr><td>3</td><td>Which chart for which type of data</td><td>Topic 10</td></tr>
+<tr><td>4</td><td>How to make subplots / multiple charts in one figure</td><td>Topic 11</td></tr>
+<tr><td>5</td><td>Histogram vs Bar chart (most common trap)</td><td>Topic 7</td></tr>
+<tr><td>6</td><td>Matplotlib vs Seaborn &mdash; when to use which</td><td>Topic 19</td></tr>
+</table>
+</section>
+
+<!-- ================= 1 ================= -->
+<section>
+<h2 class="sec"><span class="n">1</span>What is Matplotlib + Architecture</h2>
+
+<p class="lead">Matplotlib is the base plotting library of Python. Almost every other library (Seaborn, Pandas <code>.plot()</code>, Scikit-learn plots) is built on top of it.</p>
+
+<h3>What is it?</h3>
+<ul>
+  <li>A 2D (and basic 3D) plotting library for Python, made by <b>John Hunter in 2003</b>.</li>
+  <li>It was made to copy MATLAB's plotting style in Python &mdash; that is why the module is called <code>pyplot</code>.</li>
+  <li>It gives <b>full low-level control</b>: every line, tick, colour and label can be changed.</li>
+</ul>
+
+<h3>Why do we need data visualization at all?</h3>
+<ul>
+  <li>Numbers alone hide patterns. A chart shows trend, outlier and relation in one look.</li>
+  <li>Classic proof: <b>Anscombe's Quartet</b> &mdash; 4 datasets with same mean, same variance, same correlation, but totally different charts.</li>
+  <li>Used in EDA (exploratory data analysis), model result checking, and reporting to business people.</li>
+</ul>
+
+<h3>Architecture: 3 layers</h3>
+<p>This is a favourite theory question. Matplotlib is built in 3 layers.</p>
+
+<div class="fig">
+<svg viewBox="0 0 560 230" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif">
+  <rect x="30" y="12" width="500" height="58" rx="9" fill="#e8f2fa" stroke="#1f77b4" stroke-width="1.5"/>
+  <text x="48" y="36" font-size="13" font-weight="700" fill="#1f77b4">3. Scripting Layer</text>
+  <text x="48" y="55" font-size="11" fill="#1b2230">pyplot &mdash; what we actually write: plt.plot(), plt.show(). Easiest layer.</text>
+
+  <rect x="30" y="86" width="500" height="58" rx="9" fill="#e7f5f0" stroke="#1f7a5a" stroke-width="1.5"/>
+  <text x="48" y="110" font-size="13" font-weight="700" fill="#1f7a5a">2. Artist Layer</text>
+  <text x="48" y="129" font-size="11" fill="#1b2230">Every visible thing is an "Artist": Figure, Axes, Line2D, Text, Tick, Patch.</text>
+
+  <rect x="30" y="160" width="500" height="58" rx="9" fill="#f4f6fa" stroke="#5d6678" stroke-width="1.5"/>
+  <text x="48" y="184" font-size="13" font-weight="700" fill="#39465c">1. Backend Layer</text>
+  <text x="48" y="203" font-size="11" fill="#1b2230">Draws on screen or in file: Agg (PNG), PDF, SVG, TkAgg, Qt5Agg.</text>
+
+  <path d="M545 185 L545 45" stroke="#9aa6b8" stroke-width="1.3" marker-end="url(#ar)"/>
+  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L6,3 L0,6 z" fill="#9aa6b8"/></marker></defs>
+</svg>
+<div class="cap">Figure 1.1 &mdash; We write in the top layer; the bottom layer does the real drawing.</div>
+</div>
+
+<div class="box int">
+  <div class="bt">In interview, say this</div>
+  <p>"Matplotlib has three layers. <b>Backend</b> layer actually renders the output (Agg for PNG, PDF for files). <b>Artist</b> layer is the object layer &mdash; every element like Figure, Axes, Line2D, Text is an Artist object. <b>Scripting</b> layer is <code>pyplot</code>, a simple wrapper we use for quick plotting."</p>
+</div>
+
+<h3>Import convention</h3>
+<pre><code>import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+%matplotlib inline      <span class="c"># in Jupyter: show chart inside notebook</span></code></pre>
+</section>
+
+<!-- ================= 2 ================= -->
+<section>
+<h2 class="sec"><span class="n">2</span>Anatomy of a Plot (Figure, Axes, Axis)</h2>
+
+<p class="lead">If you remember only one diagram from this doc, remember this one. Interviewers ask "Figure vs Axes vs Axis" very often.</p>
+
+<div class="fig">
+<svg viewBox="0 0 580 330" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif">
+  <!-- figure -->
+  <rect x="18" y="14" width="430" height="282" rx="6" fill="#fbfcfe" stroke="#1f77b4" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="26" y="308" font-size="11" font-weight="700" fill="#1f77b4">FIGURE  (the whole canvas / paper)</text>
+  <!-- axes -->
+  <rect x="78" y="56" width="330" height="190" fill="#fff" stroke="#39465c" stroke-width="1.6"/>
+  <text x="243" y="46" font-size="12" font-weight="700" text-anchor="middle" fill="#1b2230">Title</text>
+  <!-- data -->
+  <polyline points="95,215 140,170 185,185 230,120 275,135 320,80 365,95" fill="none" stroke="#1f77b4" stroke-width="2.4"/>
+  <polyline points="95,230 140,205 185,195 230,200 275,160 320,165 365,140" fill="none" stroke="#d1702d" stroke-width="2.4" stroke-dasharray="5 3"/>
+  <!-- legend -->
+  <rect x="300" y="186" width="100" height="50" rx="4" fill="#fff" stroke="#c3ccda"/>
+  <line x1="308" y1="200" x2="330" y2="200" stroke="#1f77b4" stroke-width="2.4"/><text x="336" y="204" font-size="9">sales</text>
+  <line x1="308" y1="220" x2="330" y2="220" stroke="#d1702d" stroke-width="2.4" stroke-dasharray="4 3"/><text x="336" y="224" font-size="9">profit</text>
+  <text x="352" y="180" font-size="9" fill="#5d6678">legend</text>
+  <!-- ticks x -->
+  <g font-size="9" fill="#5d6678" text-anchor="middle">
+    <line x1="95" y1="246" x2="95" y2="252" stroke="#39465c"/><text x="95" y="264">0</text>
+    <line x1="163" y1="246" x2="163" y2="252" stroke="#39465c"/><text x="163" y="264">2</text>
+    <line x1="231" y1="246" x2="231" y2="252" stroke="#39465c"/><text x="231" y="264">4</text>
+    <line x1="299" y1="246" x2="299" y2="252" stroke="#39465c"/><text x="299" y="264">6</text>
+    <line x1="367" y1="246" x2="367" y2="252" stroke="#39465c"/><text x="367" y="264">8</text>
+  </g>
+  <text x="243" y="283" font-size="11" text-anchor="middle" fill="#1b2230">X-axis label</text>
+  <!-- ticks y -->
+  <g font-size="9" fill="#5d6678" text-anchor="end">
+    <line x1="72" y1="226" x2="78" y2="226" stroke="#39465c"/><text x="68" y="230">10</text>
+    <line x1="72" y1="170" x2="78" y2="170" stroke="#39465c"/><text x="68" y="174">20</text>
+    <line x1="72" y1="114" x2="78" y2="114" stroke="#39465c"/><text x="68" y="118">30</text>
+    <line x1="72" y1="66" x2="78" y2="66" stroke="#39465c"/><text x="68" y="70">40</text>
+  </g>
+  <text x="44" y="155" font-size="11" text-anchor="middle" fill="#1b2230" transform="rotate(-90 44 155)">Y-axis label</text>
+  <!-- callouts -->
+  <g font-size="10" fill="#6d3fa8">
+    <line x1="408" y1="151" x2="470" y2="151" stroke="#6d3fa8" stroke-width="1"/>
+    <text x="474" y="148" font-weight="700">AXES</text><text x="474" y="161">= one plot area</text>
+    <line x1="231" y1="246" x2="231" y2="300" stroke="#6d3fa8" stroke-width="1"/>
+  </g>
+  <g font-size="10" fill="#1f7a5a">
+    <line x1="367" y1="252" x2="500" y2="215" stroke="#1f7a5a" stroke-width="1"/>
+    <text x="474" y="206" font-weight="700">AXIS</text><text x="455" y="232">= number line</text>
+    <text x="455" y="244">+ its ticks</text>
+  </g>
+  <text x="462" y="86" font-size="10" font-weight="700" fill="#d1702d">SPINES</text>
+  <text x="455" y="100" font-size="10" fill="#d1702d">= 4 border lines</text>
+  <line x1="408" y1="56" x2="452" y2="80" stroke="#d1702d" stroke-width="1"/>
+</svg>
+<div class="cap">Figure 2.1 &mdash; One Figure can hold many Axes. One Axes has 2 Axis objects (x and y).</div>
+</div>
+
+<table>
+<tr><th style="width:90px">Term</th><th>Simple meaning</th><th>Code</th></tr>
+<tr><td><b>Figure</b></td><td>The full page / canvas. Container of everything. You save a Figure, not an Axes.</td><td><code>fig = plt.figure()</code></td></tr>
+<tr><td><b>Axes</b></td><td>One actual plot (the box where data is drawn). A figure can have many Axes. <b>Axes = subplot.</b></td><td><code>ax = fig.add_subplot()</code></td></tr>
+<tr><td><b>Axis</b></td><td>The number line (x-axis / y-axis). Controls limits, ticks, scale.</td><td><code>ax.xaxis</code></td></tr>
+<tr><td><b>Artist</b></td><td>Anything you can see on the figure &mdash; line, text, tick, patch, legend.</td><td><code>Line2D</code>, <code>Text</code></td></tr>
+<tr><td><b>Spines</b></td><td>The 4 border lines of the Axes box (top/bottom/left/right).</td><td><code>ax.spines['top']</code></td></tr>
+</table>
+
+<div class="box trap">
+  <div class="bt">Interview trap</div>
+  <p><b>Axes is NOT plural of Axis.</b> "Axes" means one complete plot area. "Axis" means one number line. Figure &gt; Axes &gt; Axis is the hierarchy.</p>
+</div>
+
+<div class="box int">
+  <div class="bt">One-line answer to remember</div>
+  <p>"Figure is the paper, Axes is the graph drawn on that paper, and Axis is the ruler on the side of that graph."</p>
+</div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section>
+<h2 class="sec"><span class="n">3</span>Two Interfaces: pyplot vs Object-Oriented</h2>
+
+<p class="lead">Matplotlib can be used in two styles. Interviewers love this question because most freshers know only the first one.</p>
+
+<h3>Style 1 &mdash; pyplot / state-machine style</h3>
+<p>You never store the figure. <code>plt</code> keeps a hidden "current figure" and "current axes" in memory and every command goes there.</p>
+<pre><code>plt.figure(figsize=(8,4))
+plt.plot(x, y)
+plt.title('Sales')
+plt.xlabel('Month')
+plt.show()</code></pre>
+
+<h3>Style 2 &mdash; Object-Oriented (OO) style</h3>
+<p>You get objects in variables and call methods on them. This is the <b>recommended professional way</b>.</p>
+<pre><code>fig, ax = plt.subplots(figsize=(8,4))   <span class="c"># fig = Figure, ax = Axes</span>
+ax.plot(x, y)
+ax.set_title('Sales')
+ax.set_xlabel('Month')
+plt.show()</code></pre>
+
+<table>
+<tr><th style="width:140px">Point</th><th>pyplot style</th><th>Object-Oriented style</th></tr>
+<tr><td>Who holds state</td><td>Hidden &mdash; "current axes"</td><td>You hold it in <code>ax</code> variable</td></tr>
+<tr><td>Writing speed</td><td>Very fast, less typing</td><td>Slightly more typing</td></tr>
+<tr><td>Many subplots</td><td>Confusing, you must keep switching</td><td>Clean &mdash; <code>ax[0]</code>, <code>ax[1]</code></td></tr>
+<tr><td>Inside functions / libraries</td><td>Risky, can plot on the wrong figure</td><td>Safe, you pass <code>ax</code> as argument</td></tr>
+<tr><td>Method names</td><td><code>plt.title()</code>, <code>plt.xlabel()</code>, <code>plt.xlim()</code></td><td><code>ax.set_title()</code>, <code>ax.set_xlabel()</code>, <code>ax.set_xlim()</code></td></tr>
+<tr><td>Use for</td><td>Quick EDA in notebook</td><td>Dashboards, reports, production code</td></tr>
+</table>
+
+<div class="box int">
+  <div class="bt">In interview, say this</div>
+  <p>"<code>pyplot</code> is a state-machine interface &mdash; it keeps track of the current figure and axes, so commands apply implicitly. The object-oriented interface gives me the Figure and Axes objects directly, so I can control each subplot explicitly. For quick EDA I use pyplot, but for multiple subplots or reusable plotting functions I always use the OO interface."</p>
+</div>
+
+<div class="box trap">
+  <div class="bt">Remember the naming rule</div>
+  <p>Almost every <code>plt.xyz()</code> becomes <code>ax.set_xyz()</code> in OO style. Exceptions: <code>plt.plot &rarr; ax.plot</code>, <code>plt.legend &rarr; ax.legend</code>, <code>plt.scatter &rarr; ax.scatter</code> (plotting functions keep the same name).</p>
+</div>
+
+<h3>Figure creation: 3 common ways</h3>
+<pre><code>fig, ax = plt.subplots()                 <span class="c"># 1 figure + 1 axes  (BEST)</span>
+fig, ax = plt.subplots(2, 2)             <span class="c"># 2x2 grid, ax is a 2D numpy array</span>
+
+fig = plt.figure()                       <span class="c"># empty figure</span>
+ax  = fig.add_subplot(1, 1, 1)           <span class="c"># add axes manually</span>
+
+ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])  <span class="c"># [left, bottom, width, height] 0-1</span></code></pre>
+<p class="nb"><code>add_axes</code> is used for <b>inset plots</b> (a small chart inside a big chart).</p>
+</section>
+
+<!-- ================= 4 ================= -->
+<section>
+<h2 class="sec"><span class="n">4</span>Line Plot + All Customization</h2>
+
+<h3>When to use</h3>
+<p>Line plot is for <b>trend over a continuous axis</b> &mdash; mostly time (date, year, month). Use it when order of points has meaning.</p>
+
+<pre><code>plt.plot(x, y)
+plt.plot(df['date'], df['price'])
+plt.plot(y)                      <span class="c"># if x is not given, x = 0,1,2,3...index</span>
+plt.plot(x, y1, x, y2)           <span class="c"># two lines in one call</span></code></pre>
+
+<h3>The famous format-string shortcut</h3>
+<pre><code>plt.plot(x, y, 'ro--')   <span class="c"># r = red, o = circle marker, -- = dashed line</span></code></pre>
+<table class="tight">
+<tr><th>Colour</th><th>Marker</th><th>Line style</th></tr>
+<tr><td><code>b</code> blue, <code>g</code> green, <code>r</code> red, <code>c</code> cyan, <code>m</code> magenta, <code>y</code> yellow, <code>k</code> black, <code>w</code> white</td>
+    <td><code>.</code> point, <code>o</code> circle, <code>s</code> square, <code>^</code> triangle, <code>*</code> star, <code>+</code> plus, <code>x</code> cross, <code>D</code> diamond</td>
+    <td><code>-</code> solid, <code>--</code> dashed, <code>-.</code> dash-dot, <code>:</code> dotted</td></tr>
+</table>
+
+<h3>Full keyword version (use this in real work)</h3>
+<pre><code>plt.plot(x, y,
+         color='#1f77b4',      <span class="c"># named / hex / (r,g,b) tuple</span>
+         linestyle='--',       <span class="c"># or ls</span>
+         linewidth=2,          <span class="c"># or lw</span>
+         marker='o',
+         markersize=7,         <span class="c"># or ms</span>
+         markerfacecolor='white',
+         markeredgecolor='red',
+         alpha=0.8,            <span class="c"># transparency 0 to 1</span>
+         label='Sales 2024')   <span class="c"># needed for legend</span></code></pre>
+
+<h3>Decorating the plot (must-know 8 lines)</h3>
+<pre><code>plt.title('Monthly Sales', fontsize=16, color='navy')
+plt.xlabel('Month'); plt.ylabel('Sales in Lakhs')
+plt.legend(loc='upper left')     <span class="c"># works only if label= was given</span>
+plt.xlim(0, 12); plt.ylim(0, 100)
+plt.xticks(rotation=45)
+plt.grid(True, linestyle=':', alpha=0.5)
+plt.show()                       <span class="c"># renders + clears the current figure</span></code></pre>
+
+<div class="box def">
+  <div class="bt">Why plt.show() at the end?</div>
+  <p>It flushes the figure to the backend and draws it. In a script, without <code>show()</code> nothing appears. In Jupyter with <code>%matplotlib inline</code> it is automatic, but writing it also hides the ugly <code>[&lt;matplotlib.lines.Line2D ...&gt;]</code> output line.</p>
+</div>
+
+<div class="box int">
+  <div class="bt">Quick interview point</div>
+  <p>Line plot of a <b>categorical</b> x-axis is wrong, because a line implies continuity between points. For categories, use a bar chart.</p>
+</div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section>
+<h2 class="sec"><span class="n">5</span>Scatter Plot</h2>
+
+<h3>When to use</h3>
+<p>To see the <b>relationship / correlation between two numerical columns</b>. Also to spot outliers and clusters.</p>
+
+<pre><code>plt.scatter(df['height'], df['weight'])</code></pre>
+
+<h3>Encoding more than 2 variables (very good interview answer)</h3>
+<p>A scatter plot can show <b>4 variables at once</b>:</p>
+<table class="tight">
+<tr><th>Channel</th><th>Parameter</th><th>Shows</th></tr>
+<tr><td>x position</td><td><code>x</code></td><td>numerical var 1</td></tr>
+<tr><td>y position</td><td><code>y</code></td><td>numerical var 2</td></tr>
+<tr><td>colour</td><td><code>c</code> + <code>cmap</code></td><td>var 3 (category or number)</td></tr>
+<tr><td>size of dot</td><td><code>s</code></td><td>var 4 (number) &mdash; called a <b>bubble chart</b></td></tr>
+</table>
+
+<pre><code>plt.scatter(df['height'], df['weight'],
+            c=df['age'], cmap='viridis',   <span class="c"># colour = age</span>
+            s=df['salary']/1000,           <span class="c"># size = salary (bubble chart)</span>
+            alpha=0.7, marker='o',
+            edgecolors='black', linewidths=0.5)
+plt.colorbar(label='Age')                  <span class="c"># legend for the colour scale</span></code></pre>
+
+<div class="box trap">
+  <div class="bt">plt.plot vs plt.scatter &mdash; asked a lot</div>
+  <p><code>plt.plot(x, y, 'o')</code> also gives dots, and it is <b>faster</b> for big data, but every dot must have the same colour and same size. <code>plt.scatter()</code> is slower but lets each dot have its own colour and size. So: same styling for all points &rarr; <code>plot</code>; different styling per point &rarr; <code>scatter</code>.</p>
+</div>
+
+<h3>Overplotting problem</h3>
+<p>With lakhs of points, dots sit on top of each other and the chart becomes a black blob. Fixes:</p>
+<ul>
+  <li><code>alpha=0.1</code> &mdash; transparency shows density</li>
+  <li><code>plt.hexbin(x, y, gridsize=30)</code> &mdash; hexagon density plot</li>
+  <li>Take a random sample of rows</li>
+  <li>Use a 2D histogram / KDE (Seaborn <code>kdeplot</code>)</li>
+</ul>
+</section>
+
+<!-- ================= 6 ================= -->
+<section>
+<h2 class="sec"><span class="n">6</span>Bar Chart (grouped, stacked, horizontal)</h2>
+
+<h3>When to use</h3>
+<p>To compare a <b>numerical value across categories</b> (sales per city, marks per student). Height of bar = value.</p>
+
+<pre><code>plt.bar(x=['A','B','C'], height=[10,25,17], color=['red','green','blue'], width=0.6)
+plt.barh(['A','B','C'], [10,25,17])      <span class="c"># horizontal bar</span></code></pre>
+
+<div class="box int">
+  <div class="bt">When to prefer barh (horizontal)</div>
+  <p>When category names are long (city names, product names) or when there are many categories. Horizontal bars keep labels readable without rotation.</p>
+</div>
+
+<h3>Grouped bar chart (side by side)</h3>
+<p>Trick: shift the x positions manually using numpy.</p>
+<pre><code>import numpy as np
+x = np.arange(len(months))      <span class="c"># 0,1,2,3...</span>
+w = 0.35
+plt.bar(x - w/2, sales_2023, width=w, label='2023')
+plt.bar(x + w/2, sales_2024, width=w, label='2024')
+plt.xticks(x, months)           <span class="c"># put real names back on the ticks</span>
+plt.legend()</code></pre>
+
+<h3>Stacked bar chart</h3>
+<p>Trick: use the <code>bottom</code> parameter &mdash; the second bar starts on top of the first.</p>
+<pre><code>plt.bar(months, maths, label='Maths')
+plt.bar(months, science, bottom=maths, label='Science')
+plt.bar(months, english, bottom=np.array(maths)+np.array(science), label='English')</code></pre>
+
+<table class="tight">
+<tr><th style="width:120px">Type</th><th>Use when</th></tr>
+<tr><td>Simple bar</td><td>Compare one value across categories</td></tr>
+<tr><td>Grouped bar</td><td>Compare sub-groups <b>against each other</b> (2023 vs 2024)</td></tr>
+<tr><td>Stacked bar</td><td>Show <b>parts of a total</b> and the total itself</td></tr>
+<tr><td>100% stacked</td><td>Compare only the <b>proportion</b>, totals do not matter</td></tr>
+</table>
+
+<h3>Adding value labels on bars</h3>
+<pre><code>bars = plt.bar(x, y)
+plt.bar_label(bars, padding=3, fmt='%.1f')   <span class="c"># modern one-liner</span></code></pre>
+
+<div class="box trap">
+  <div class="bt">Interview trap</div>
+  <p>A bar chart's y-axis <b>must start from 0</b>. If it starts from 90, a small difference looks huge &mdash; that is a misleading chart. Line charts do not have this rule.</p>
+</div>
+</section>
+
+<!-- ================= 7 ================= -->
+<section>
+<h2 class="sec"><span class="n">7</span>Histogram</h2>
+
+<h3>When to use</h3>
+<p>To see the <b>distribution of ONE numerical column</b> &mdash; where most values lie, is it skewed, are there outliers.</p>
+
+<pre><code>plt.hist(df['age'], bins=20, edgecolor='black')
+plt.hist(df['age'], bins=[0,18,30,45,60,100])   <span class="c"># custom bin edges</span>
+plt.hist(df['age'], bins=20, density=True)      <span class="c"># y = probability density, area = 1</span>
+plt.hist(df['age'], cumulative=True)            <span class="c"># CDF shape</span>
+plt.hist([m_age, f_age], label=['Male','Female'])        <span class="c"># side by side</span>
+plt.hist(x, histtype='step')                    <span class="c"># outline only, good for overlap</span></code></pre>
+
+<h3>Histogram vs Bar chart &mdash; the most asked question</h3>
+<table>
+<tr><th style="width:110px">Point</th><th>Histogram</th><th>Bar chart</th></tr>
+<tr><td>Data type on x</td><td><b>Numerical</b> (continuous)</td><td><b>Categorical</b></td></tr>
+<tr><td>x-axis meaning</td><td>Ranges / bins (0&ndash;10, 10&ndash;20)</td><td>Separate labels (Delhi, Mumbai)</td></tr>
+<tr><td>Gap between bars</td><td>No gap (ranges are continuous)</td><td>Gap present</td></tr>
+<tr><td>Bar order</td><td>Cannot be changed (number order)</td><td>Can be re-ordered freely</td></tr>
+<tr><td>Y-axis</td><td>Frequency / count of values in that range</td><td>Any value of that category</td></tr>
+<tr><td>Answers</td><td>"How is this column distributed?"</td><td>"Which category is bigger?"</td></tr>
+</table>
+
+<h3>Bins &mdash; why they matter</h3>
+<ul>
+  <li><b>Too few bins</b> &rarr; over-smoothed, you miss the real shape.</li>
+  <li><b>Too many bins</b> &rarr; noisy, spiky, hard to read.</li>
+  <li>Default in Matplotlib is <b>10</b>. Common rules: Sturges, Freedman&ndash;Diaconis (<code>bins='auto'</code> uses these).</li>
+</ul>
+
+<div class="box int">
+  <div class="bt">What to read from a histogram (say this)</div>
+  <ul>
+    <li><b>Shape</b>: normal (bell), uniform, bimodal (2 peaks &rarr; two groups mixed).</li>
+    <li><b>Skew</b>: right/positive skew &rarr; long tail on right (income, price). Left skew &rarr; tail on left.</li>
+    <li><b>Spread</b> and <b>outliers</b>: lonely bars far away.</li>
+  </ul>
+</div>
+<p class="nb"><b>Related:</b> KDE plot is the smooth version of a histogram (no bins). In Matplotlib you get KDE through Seaborn or SciPy.</p>
+</section>
+
+<!-- ================= 8 ================= -->
+<section>
+<h2 class="sec"><span class="n">8</span>Pie Chart</h2>
+
+<h3>When to use</h3>
+<p>To show <b>share / percentage of a whole</b>, when there are only 2&ndash;5 categories and they add up to 100%.</p>
+
+<pre><code>plt.pie(values, labels=names,
+        autopct='%0.1f%%',          <span class="c"># show percentage on slices</span>
+        explode=[0, 0.1, 0, 0],     <span class="c"># pull out the 2nd slice</span>
+        shadow=True,
+        startangle=90,
+        colors=['#1f77b4','#ff7f0e','#2ca02c','#d62728'])
+plt.pie(values, labels=names, wedgeprops={'width':0.4})   <span class="c"># donut chart</span></code></pre>
+
+<div class="box trap">
+  <div class="bt">Interview answer that impresses</div>
+  <p>"Pie charts are generally discouraged. Human eyes compare <b>lengths</b> better than <b>angles and areas</b>, so with more than 4&ndash;5 slices or slices of similar size, a pie chart becomes unreadable. I prefer a horizontal bar chart in those cases."</p>
+</div>
+</section>
+
+<!-- ================= 9 ================= -->
+<section>
+<h2 class="sec"><span class="n">9</span>Box Plot &amp; Other Statistical Plots</h2>
+
+<h3>Box plot (box-and-whisker)</h3>
+<p>Shows the <b>five-number summary</b> of a numerical column and its outliers, in very little space. Best for <b>comparing distributions across groups</b>.</p>
+
+<div class="fig">
+<svg viewBox="0 0 560 215" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif">
+  <line x1="60" y1="175" x2="520" y2="175" stroke="#c3ccda"/>
+  <!-- whisker line -->
+  <line x1="150" y1="95" x2="420" y2="95" stroke="#39465c" stroke-width="1.6"/>
+  <line x1="150" y1="78" x2="150" y2="112" stroke="#39465c" stroke-width="2"/>
+  <line x1="420" y1="78" x2="420" y2="112" stroke="#39465c" stroke-width="2"/>
+  <!-- box -->
+  <rect x="215" y="68" width="150" height="54" fill="#e8f2fa" stroke="#1f77b4" stroke-width="2"/>
+  <line x1="280" y1="68" x2="280" y2="122" stroke="#d62728" stroke-width="2.6"/>
+  <!-- outliers -->
+  <circle cx="470" cy="95" r="4.2" fill="none" stroke="#39465c" stroke-width="1.4"/>
+  <circle cx="495" cy="95" r="4.2" fill="none" stroke="#39465c" stroke-width="1.4"/>
+  <circle cx="100" cy="95" r="4.2" fill="none" stroke="#39465c" stroke-width="1.4"/>
+  <!-- labels -->
+  <g font-size="10" fill="#1b2230" text-anchor="middle">
+    <text x="150" y="60">Q1 - 1.5*IQR</text><text x="150" y="146">lower whisker</text>
+    <text x="215" y="140">Q1 (25%)</text>
+    <text x="280" y="55" fill="#d62728" font-weight="700">Median (50%)</text>
+    <text x="365" y="140">Q3 (75%)</text>
+    <text x="420" y="60">Q3 + 1.5*IQR</text><text x="425" y="146">upper whisker</text>
+    <text x="483" y="75" fill="#9a5b00">outliers</text>
+    <text x="100" y="75" fill="#9a5b00">outlier</text>
+  </g>
+  <!-- IQR brace -->
+  <line x1="215" y1="160" x2="365" y2="160" stroke="#1f7a5a" stroke-width="1.3"/>
+  <line x1="215" y1="155" x2="215" y2="165" stroke="#1f7a5a"/><line x1="365" y1="155" x2="365" y2="165" stroke="#1f7a5a"/>
+  <text x="290" y="200" font-size="11" font-weight="700" fill="#1f7a5a" text-anchor="middle">IQR = Q3 &minus; Q1  (middle 50% of data)</text>
+</svg>
+<div class="cap">Figure 9.1 &mdash; Box plot anatomy. Anything beyond 1.5&times;IQR from the box is drawn as an outlier.</div>
+</div>
+
+<pre><code>plt.boxplot(df['salary'])
+plt.boxplot([s1, s2, s3], labels=['IT','HR','Sales'])
+plt.boxplot(data, vert=False, showmeans=True, notch=True)</code></pre>
+
+<div class="box int">
+  <div class="bt">Must-know formula</div>
+  <p>IQR = Q3 &minus; Q1. Outlier if value &lt; Q1 &minus; 1.5&times;IQR or value &gt; Q3 + 1.5&times;IQR. Whiskers go to the last real data point inside this range &mdash; <b>not</b> exactly to the limit.</p>
+</div>
+
+<h3>Box plot vs Histogram</h3>
+<table class="tight">
+<tr><th>Box plot</th><th>Histogram</th></tr>
+<tr><td>Compact; easy to compare many groups side by side</td><td>Shows the real shape of the distribution</td></tr>
+<tr><td>Marks outliers clearly</td><td>Outliers are just small bars</td></tr>
+<tr><td><b>Cannot</b> show bimodal (two peaks) &mdash; big weakness</td><td>Shows two peaks clearly</td></tr>
+</table>
+<p class="nb">That weakness is why <b>violin plots</b> exist (box plot + KDE). Covered in the Seaborn doc.</p>
+
+<h3>Other useful plots (short)</h3>
+<table class="tight">
+<tr><th style="width:150px">Function</th><th>What it does</th></tr>
+<tr><td><code>plt.stackplot(x, y1, y2)</code></td><td>Area chart stacked &mdash; part-to-whole over time</td></tr>
+<tr><td><code>plt.fill_between(x, lo, hi)</code></td><td>Shade a band (confidence interval, min&ndash;max range)</td></tr>
+<tr><td><code>plt.errorbar(x, y, yerr=e)</code></td><td>Point + error bars (standard deviation / CI)</td></tr>
+<tr><td><code>plt.stem(x, y)</code></td><td>Lollipop / signal plot &mdash; discrete values</td></tr>
+<tr><td><code>plt.hexbin(x, y, gridsize=25)</code></td><td>2D density for huge scatter data</td></tr>
+<tr><td><code>plt.violinplot(data)</code></td><td>Distribution shape + summary</td></tr>
+<tr><td><code>plt.step(x, y)</code></td><td>Step chart &mdash; values that change suddenly</td></tr>
+<tr><td><code>plt.pcolormesh(X, Y, Z)</code></td><td>2D colour grid for matrix data</td></tr>
+</table>
+</section>
+
+<!-- ================= 10 ================= -->
+<section>
+<h2 class="sec"><span class="n">10</span>Which Chart to Use When</h2>
+<p class="lead">This is a guaranteed interview question. Answer by first saying <b>how many variables</b> and <b>what type</b>, then name the chart.</p>
+
+<div class="fig">
+<svg viewBox="0 0 580 300" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif">
+  <rect x="215" y="8" width="150" height="30" rx="7" fill="#1f77b4"/>
+  <text x="290" y="28" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">How many columns?</text>
+  <line x1="290" y1="38" x2="290" y2="52" stroke="#9aa6b8"/>
+  <line x1="110" y1="52" x2="470" y2="52" stroke="#9aa6b8"/>
+  <line x1="110" y1="52" x2="110" y2="66" stroke="#9aa6b8"/>
+  <line x1="290" y1="52" x2="290" y2="66" stroke="#9aa6b8"/>
+  <line x1="470" y1="52" x2="470" y2="66" stroke="#9aa6b8"/>
+
+  <rect x="40" y="66" width="140" height="26" rx="6" fill="#e8f2fa" stroke="#1f77b4"/>
+  <text x="110" y="84" font-size="11" font-weight="700" fill="#1f77b4" text-anchor="middle">1 column</text>
+  <rect x="220" y="66" width="140" height="26" rx="6" fill="#e7f5f0" stroke="#1f7a5a"/>
+  <text x="290" y="84" font-size="11" font-weight="700" fill="#1f7a5a" text-anchor="middle">2 columns</text>
+  <rect x="400" y="66" width="140" height="26" rx="6" fill="#f2ecfb" stroke="#6d3fa8"/>
+  <text x="470" y="84" font-size="11" font-weight="700" fill="#6d3fa8" text-anchor="middle">3+ columns</text>
+
+  <g font-size="10" fill="#1b2230">
+    <text x="110" y="112" text-anchor="middle" font-weight="700">Numerical</text>
+    <text x="110" y="127" text-anchor="middle">histogram, KDE,</text>
+    <text x="110" y="140" text-anchor="middle">box plot</text>
+    <text x="110" y="164" text-anchor="middle" font-weight="700">Categorical</text>
+    <text x="110" y="179" text-anchor="middle">countplot / bar,</text>
+    <text x="110" y="192" text-anchor="middle">pie (few cats)</text>
+
+    <text x="290" y="112" text-anchor="middle" font-weight="700">Num &ndash; Num</text>
+    <text x="290" y="127" text-anchor="middle">scatter, line (if time)</text>
+    <text x="290" y="151" text-anchor="middle" font-weight="700">Cat &ndash; Num</text>
+    <text x="290" y="166" text-anchor="middle">bar, box, violin</text>
+    <text x="290" y="190" text-anchor="middle" font-weight="700">Cat &ndash; Cat</text>
+    <text x="290" y="205" text-anchor="middle">grouped bar, heatmap</text>
+
+    <text x="470" y="112" text-anchor="middle" font-weight="700">Add a channel</text>
+    <text x="470" y="127" text-anchor="middle">hue (colour), size,</text>
+    <text x="470" y="140" text-anchor="middle">style (marker)</text>
+    <text x="470" y="164" text-anchor="middle" font-weight="700">Or split charts</text>
+    <text x="470" y="179" text-anchor="middle">subplots / FacetGrid,</text>
+    <text x="470" y="192" text-anchor="middle">pairplot, 3D, bubble</text>
+  </g>
+  <rect x="40" y="228" width="500" height="54" rx="8" fill="#fff4e2" stroke="#f3dcb3"/>
+  <text x="56" y="248" font-size="11" font-weight="700" fill="#9a5b00">Golden rule for the interview</text>
+  <text x="56" y="266" font-size="10.5" fill="#1b2230">First ask: how many variables, and are they numerical or categorical? The chart follows from that answer.</text>
+</svg>
+<div class="cap">Figure 10.1 &mdash; Chart selection flow.</div>
+</div>
+
+<table>
+<tr><th style="width:150px">I want to show...</th><th>Best chart</th><th>Avoid</th></tr>
+<tr><td>Trend over time</td><td>Line plot, area chart</td><td>Pie, bar with many points</td></tr>
+<tr><td>Comparison of categories</td><td>Bar / horizontal bar</td><td>Pie if &gt;5 categories</td></tr>
+<tr><td>Distribution of 1 numerical</td><td>Histogram, KDE, box plot</td><td>Bar chart</td></tr>
+<tr><td>Relation between 2 numerical</td><td>Scatter plot</td><td>Line (if not time-ordered)</td></tr>
+<tr><td>Part of a whole</td><td>Stacked bar, pie/donut, treemap</td><td>Normal bar</td></tr>
+<tr><td>Correlation of many columns</td><td>Heatmap of <code>df.corr()</code></td><td>Many scatter plots</td></tr>
+<tr><td>Composition + total over time</td><td>Stacked area chart</td><td>Many lines</td></tr>
+<tr><td>Outlier detection</td><td>Box plot, scatter</td><td>Pie</td></tr>
+<tr><td>Spread by group</td><td>Box plot / violin by category</td><td>Only mean in a bar chart</td></tr>
+</table>
+</section>
+
+<!-- ================= 11 ================= -->
+<section>
+<h2 class="sec"><span class="n">11</span>Subplots &amp; Layout</h2>
+<p class="lead">Subplot = many Axes inside one Figure. There are 4 ways, and interviewers ask the difference.</p>
+
+<div class="fig">
+<svg viewBox="0 0 580 215" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif">
+  <!-- left: regular grid -->
+  <rect x="18" y="24" width="250" height="150" rx="5" fill="#fbfcfe" stroke="#1f77b4" stroke-dasharray="5 4"/>
+  <g fill="#e8f2fa" stroke="#1f77b4">
+    <rect x="32" y="38" width="108" height="58"/><rect x="148" y="38" width="108" height="58"/>
+    <rect x="32" y="104" width="108" height="58"/><rect x="148" y="104" width="108" height="58"/>
+  </g>
+  <g font-size="11" fill="#1f77b4" text-anchor="middle" font-weight="700">
+    <text x="86" y="72">ax[0,0]</text><text x="202" y="72">ax[0,1]</text>
+    <text x="86" y="138">ax[1,0]</text><text x="202" y="138">ax[1,1]</text>
+  </g>
+  <text x="143" y="16" font-size="11" font-weight="700" text-anchor="middle" fill="#1b2230">plt.subplots(2, 2)</text>
+  <text x="143" y="192" font-size="9.5" text-anchor="middle" fill="#5d6678">equal size grid &mdash; ax is a 2D numpy array</text>
+
+  <!-- right: gridspec -->
+  <rect x="312" y="24" width="250" height="150" rx="5" fill="#fbfcfe" stroke="#1f7a5a" stroke-dasharray="5 4"/>
+  <g fill="#e7f5f0" stroke="#1f7a5a">
+    <rect x="326" y="38" width="224" height="58"/>
+    <rect x="326" y="104" width="105" height="58"/>
+    <rect x="439" y="104" width="111" height="58"/>
+  </g>
+  <g font-size="11" fill="#1f7a5a" text-anchor="middle" font-weight="700">
+    <text x="438" y="72">gs[0, :]  (spans 2 columns)</text>
+    <text x="378" y="138">gs[1,0]</text><text x="494" y="138">gs[1,1]</text>
+  </g>
+  <text x="437" y="16" font-size="11" font-weight="700" text-anchor="middle" fill="#1b2230">GridSpec &mdash; unequal sizes</text>
+  <text x="437" y="192" font-size="9.5" text-anchor="middle" fill="#5d6678">one plot can span many cells</text>
+</svg>
+<div class="cap">Figure 11.1 &mdash; Regular grid vs GridSpec.</div>
+</div>
+
+<h3>Way 1 &mdash; plt.subplots() (use this 90% of time)</h3>
+<pre><code>fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12,8),
+                       sharex=True, sharey=True)
+ax[0,0].plot(x, y);        ax[0,0].set_title('Line')
+ax[0,1].scatter(x, y);     ax[0,1].set_title('Scatter')
+ax[1,0].hist(data)
+ax[1,1].bar(cat, val)
+fig.suptitle('My Dashboard', fontsize=18)   <span class="c"># title of the whole FIGURE</span>
+plt.tight_layout()                          <span class="c"># fix overlapping labels</span></code></pre>
+<p class="nb">If <code>nrows=1</code> or <code>ncols=1</code>, <code>ax</code> is a <b>1D</b> array &rarr; use <code>ax[0]</code>, not <code>ax[0,0]</code>. With 1&times;1 it is a single object, not an array at all.</p>
+
+<h3>Way 2 &mdash; plt.subplot() (old pyplot style, 1-indexed)</h3>
+<pre><code>plt.subplot(2, 2, 1)   <span class="c"># rows, cols, index (starts at 1, left to right)</span>
+plt.plot(x, y)
+plt.subplot(2, 2, 2)
+plt.hist(data)</code></pre>
+
+<h3>Way 3 &mdash; fig.add_subplot()</h3>
+<pre><code>fig = plt.figure(figsize=(10,6))
+ax1 = fig.add_subplot(2, 2, 1)
+ax2 = fig.add_subplot(2, 2, 2)</code></pre>
+<p class="nb">Useful when subplots must be added one by one, or for 3D: <code>fig.add_subplot(projection='3d')</code>.</p>
+
+<h3>Way 4 &mdash; GridSpec / subplot2grid (unequal sizes)</h3>
+<pre><code>import matplotlib.gridspec as gridspec
+fig = plt.figure(figsize=(10,6))
+gs  = gridspec.GridSpec(2, 2, height_ratios=[2,1], hspace=0.3, wspace=0.2)
+ax1 = fig.add_subplot(gs[0, :])    <span class="c"># full top row</span>
+ax2 = fig.add_subplot(gs[1, 0])
+ax3 = fig.add_subplot(gs[1, 1])
+
+<span class="c"># older equivalent</span>
+ax1 = plt.subplot2grid((3,3), (0,0), colspan=3)
+ax2 = plt.subplot2grid((3,3), (1,0), rowspan=2, colspan=2)</code></pre>
+
+<table class="tight">
+<tr><th style="width:140px">Parameter</th><th>Meaning</th></tr>
+<tr><td><code>figsize=(w,h)</code></td><td>Figure size in <b>inches</b></td></tr>
+<tr><td><code>dpi=100</code></td><td>Dots per inch. Pixels = figsize &times; dpi</td></tr>
+<tr><td><code>sharex / sharey</code></td><td>Same axis range for all subplots; inner tick labels are hidden</td></tr>
+<tr><td><code>tight_layout()</code></td><td>Auto-adjust spacing so nothing overlaps</td></tr>
+<tr><td><code>constrained_layout=True</code></td><td>Newer, smarter version of tight_layout</td></tr>
+<tr><td><code>hspace / wspace</code></td><td>Vertical / horizontal gap between subplots</td></tr>
+<tr><td><code>fig.suptitle()</code></td><td>Title for the whole figure (vs <code>ax.set_title()</code> for one subplot)</td></tr>
+</table>
+
+<div class="box int">
+  <div class="bt">Common interview task</div>
+  <p>"Plot 4 charts in one figure." Answer: <code>fig, ax = plt.subplots(2, 2, figsize=(12,8))</code>, then draw on <code>ax[0,0]</code>&hellip;<code>ax[1,1]</code>, and finish with <code>plt.tight_layout()</code>. Mention <code>sharey=True</code> if the charts must be compared on the same scale.</p>
+</div>
+</section>
+
+<!-- ================= 12 ================= -->
+<section>
+<h2 class="sec"><span class="n">12</span>Colors, Colormaps, Styles, rcParams</h2>
+
+<h3>Ways to give a colour</h3>
+<pre><code>color='red'              <span class="c"># 1. name</span>
+color='r'                <span class="c"># 2. single letter</span>
+color='#1f77b4'          <span class="c"># 3. hex</span>
+color=(0.1, 0.4, 0.8)    <span class="c"># 4. RGB tuple, 0-1</span>
+color=(0.1,0.4,0.8,0.5)  <span class="c"># 5. RGBA (last = alpha)</span>
+color='C0'               <span class="c"># 6. C0..C9 = default colour cycle</span>
+color='tab:blue'         <span class="c"># 7. tableau palette</span></code></pre>
+
+<h3>Colormaps (cmap) &mdash; 3 types</h3>
+<table>
+<tr><th style="width:110px">Type</th><th>Use when</th><th>Examples</th></tr>
+<tr><td><b>Sequential</b></td><td>Values go low &rarr; high (one direction)</td><td><code>viridis</code>, <code>plasma</code>, <code>Blues</code>, <code>YlOrRd</code></td></tr>
+<tr><td><b>Diverging</b></td><td>There is a meaningful middle (0, average). E.g. correlation &minus;1 to +1</td><td><code>coolwarm</code>, <code>RdBu</code>, <code>bwr</code>, <code>seismic</code></td></tr>
+<tr><td><b>Qualitative</b></td><td>Categories with no order</td><td><code>tab10</code>, <code>Set1</code>, <code>Paired</code></td></tr>
+</table>
+<div class="box int">
+  <div class="bt">Smart point to mention</div>
+  <p>"I prefer <code>viridis</code> over <code>jet</code>. <code>jet</code> is not perceptually uniform &mdash; equal steps in data do not look like equal steps in colour, and it is bad for colour-blind users. <code>viridis</code> is uniform and colour-blind friendly, that is why it is the Matplotlib default."</p>
+</div>
+
+<h3>Styles &mdash; change the whole look in one line</h3>
+<pre><code>print(plt.style.available)
+plt.style.use('ggplot')        <span class="c"># seaborn-v0_8, fivethirtyeight, dark_background, bmh, classic</span>
+with plt.style.context('dark_background'):   <span class="c"># apply to one plot only</span>
+    plt.plot(x, y)</code></pre>
+
+<h3>rcParams &mdash; global default settings</h3>
+<pre><code>plt.rcParams['figure.figsize']  = (10, 5)
+plt.rcParams['font.size']       = 12
+plt.rcParams['axes.grid']       = True
+plt.rcParams['lines.linewidth'] = 2
+plt.rcParams.update({'axes.titlesize': 16})
+plt.rcdefaults()               <span class="c"># reset everything back</span></code></pre>
+<p class="nb"><b>rc</b> = "runtime configuration". These defaults come from a <code>matplotlibrc</code> file. Good answer when asked "how do you avoid writing figsize again and again?"</p>
+</section>
+
+<!-- ================= 13 ================= -->
+<section>
+<h2 class="sec"><span class="n">13</span>Text, Annotation &amp; Legend Control</h2>
+
+<h3>Text and arrows</h3>
+<pre><code>plt.text(x=5, y=20, s='Peak sales', fontsize=12, color='red',
+         ha='center', va='bottom',
+         bbox=dict(facecolor='yellow', alpha=0.4, boxstyle='round'))
+
+plt.annotate('Highest point',
+             xy=(5, 25),                 <span class="c"># point to mark</span>
+             xytext=(7, 30),             <span class="c"># where the text sits</span>
+             arrowprops=dict(arrowstyle='-&gt;', color='black', lw=1.5))
+
+plt.axhline(y=50, color='red', ls='--', label='Target')   <span class="c"># horizontal line</span>
+plt.axvline(x=10, color='grey')                            <span class="c"># vertical line</span>
+plt.axhspan(40, 60, color='green', alpha=0.1)              <span class="c"># shaded band</span></code></pre>
+<p class="nb"><code>text()</code> only writes text. <code>annotate()</code> writes text <b>and draws an arrow</b> to a data point &mdash; that is the difference they ask.</p>
+
+<h3>Legend control</h3>
+<pre><code>plt.plot(x, y, label='2024')
+plt.legend(loc='best',            <span class="c"># upper right/left, lower.., center, best</span>
+           fontsize=10,
+           title='Year',
+           ncol=2,                <span class="c"># legend in 2 columns</span>
+           frameon=False,
+           bbox_to_anchor=(1.02, 1))   <span class="c"># push legend OUTSIDE the plot</span>
+
+<span class="c"># manual legend when labels are not set</span>
+ax.legend(['first line', 'second line'])</code></pre>
+<div class="box trap">
+  <div class="bt">Why is my legend empty / not showing?</div>
+  <p>Because <code>label=</code> was not passed to the plotting function. <code>plt.legend()</code> only collects artists that have a label. (A label starting with <code>_</code> is also skipped.)</p>
+</div>
+</section>
+
+<!-- ================= 14 ================= -->
+<section>
+<h2 class="sec"><span class="n">14</span>Axis Control: limits, ticks, spines, twin, log</h2>
+
+<h3>Limits and ticks</h3>
+<pre><code>plt.xlim(0, 100); plt.ylim(0, 50)
+ax.set_xlim(0, 100)                       <span class="c"># OO style</span>
+plt.xticks([0,25,50,75,100], ['0','25','50','75','100'], rotation=45)
+ax.set_xticks(ticks); ax.set_xticklabels(labels)
+ax.tick_params(axis='x', labelsize=9, colors='grey', length=6)
+ax.invert_yaxis()                          <span class="c"># flip the axis</span></code></pre>
+
+<h3>Spines &mdash; remove the ugly box</h3>
+<pre><code>ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.spines['left'].set_position(('outward', 10))</code></pre>
+<p class="nb">In Seaborn this one line does the same: <code>sns.despine()</code>.</p>
+
+<h3>Log scale</h3>
+<pre><code>plt.yscale('log')      <span class="c"># also 'linear', 'symlog', 'logit'</span>
+ax.set_xscale('log')</code></pre>
+<p>Use log scale when values span many orders of magnitude (1, 100, 10000) or data has exponential growth &mdash; on a log axis exponential growth becomes a straight line.</p>
+
+<h3>Twin axis &mdash; two different units in one chart</h3>
+<pre><code>fig, ax1 = plt.subplots()
+ax1.plot(months, sales, color='blue')
+ax1.set_ylabel('Sales (Crore)', color='blue')
+
+ax2 = ax1.twinx()                <span class="c"># shares the x-axis, new y-axis on right</span>
+ax2.plot(months, temperature, color='red')
+ax2.set_ylabel('Temperature (C)', color='red')</code></pre>
+<p class="nb"><code>twinx()</code> = share x, separate y. <code>twiny()</code> = share y, separate x. Mention the caution: twin axes can mislead, because the scales are chosen by hand.</p>
+
+<h3>Date axis</h3>
+<pre><code>import matplotlib.dates as mdates
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%b-%Y'))
+ax.xaxis.set_major_locator(mdates.MonthLocator())
+fig.autofmt_xdate()              <span class="c"># auto-rotate date labels</span></code></pre>
+</section>
+
+<!-- ================= 15 ================= -->
+<section>
+<h2 class="sec"><span class="n">15</span>Images &amp; Heatmap with imshow</h2>
+<p>An image is just a NumPy array: grayscale is 2D <code>(h, w)</code>, colour is 3D <code>(h, w, 3)</code> for RGB or <code>(h, w, 4)</code> for RGBA.</p>
+
+<pre><code>img = plt.imread('photo.png')     <span class="c"># numpy array</span>
+print(img.shape)                  <span class="c"># (height, width, channels)</span>
+plt.imshow(img)
+plt.axis('off')
+
+<span class="c"># grayscale / matrix as heatmap</span>
+plt.imshow(matrix, cmap='viridis', interpolation='nearest', aspect='auto')
+plt.colorbar(label='value')
+
+<span class="c"># correlation heatmap in pure matplotlib</span>
+plt.imshow(df.corr(), cmap='coolwarm', vmin=-1, vmax=1)
+plt.xticks(range(len(df.columns)), df.columns, rotation=90)
+plt.yticks(range(len(df.columns)), df.columns)</code></pre>
+
+<table class="tight">
+<tr><th style="width:130px">Parameter</th><th>Meaning</th></tr>
+<tr><td><code>cmap</code></td><td>Colormap used to map numbers to colours</td></tr>
+<tr><td><code>vmin, vmax</code></td><td>Fix the colour scale range (important for fair comparison)</td></tr>
+<tr><td><code>interpolation</code></td><td>Smoothing between pixels (<code>'nearest'</code> = no smoothing)</td></tr>
+<tr><td><code>aspect</code></td><td><code>'equal'</code> keeps square pixels, <code>'auto'</code> stretches to the axes</td></tr>
+<tr><td><code>origin</code></td><td><code>'upper'</code> (default, row 0 on top) or <code>'lower'</code></td></tr>
+</table>
+<p class="nb">In practice everyone uses <code>sns.heatmap()</code> because it adds annotations and a colorbar automatically.</p>
+</section>
+
+<!-- ================= 16 ================= -->
+<section>
+<h2 class="sec"><span class="n">16</span>3D Plotting</h2>
+<pre><code>fig = plt.figure(figsize=(9,6))
+ax  = fig.add_subplot(projection='3d')      <span class="c"># this one line makes it 3D</span>
+
+ax.scatter3D(x, y, z, c=z, cmap='viridis')
+ax.plot3D(x, y, z)
+ax.set_xlabel('X'); ax.set_ylabel('Y'); ax.set_zlabel('Z')
+ax.view_init(elev=30, azim=45)              <span class="c"># camera angle</span></code></pre>
+
+<h3>Surface / wireframe / contour &mdash; needs meshgrid</h3>
+<pre><code>x = np.linspace(-5, 5, 100)
+y = np.linspace(-5, 5, 100)
+X, Y = np.meshgrid(x, y)        <span class="c"># 1D arrays -&gt; 2D coordinate grids</span>
+Z = np.sin(np.sqrt(X**2 + Y**2))
+
+ax.plot_surface(X, Y, Z, cmap='viridis')
+ax.plot_wireframe(X, Y, Z, color='grey')
+ax.contour3D(X, Y, Z, 50)
+plt.contourf(X, Y, Z, cmap='coolwarm')      <span class="c"># 2D filled contour</span></code></pre>
+
+<div class="box int">
+  <div class="bt">Why meshgrid? (asked with 3D and with ML decision boundaries)</div>
+  <p>"Z must be computed at every (x, y) pair. <code>meshgrid</code> turns two 1D arrays into two 2D grids so that <code>X[i][j], Y[i][j]</code> gives the coordinate of every cell. Then Z = f(X, Y) can be computed in one vectorized step. The same trick is used to draw ML decision boundaries."</p>
+</div>
+<p class="nb">Interview caution: 3D charts look cool but hide data behind data. In real reports, 2D with colour/size encoding is usually better.</p>
+</section>
+
+<!-- ================= 17 ================= -->
+<section>
+<h2 class="sec"><span class="n">17</span>Saving Figures, DPI &amp; Backends</h2>
+<pre><code>plt.savefig('chart.png',
+            dpi=300,                 <span class="c"># 300 for print, 100 for web</span>
+            bbox_inches='tight',     <span class="c"># remove extra white border</span>
+            transparent=True,
+            facecolor='white')
+fig.savefig('chart.pdf')             <span class="c"># OO style (preferred)</span></code></pre>
+
+<div class="box trap">
+  <div class="bt">Classic bug: saved image is blank</div>
+  <p>Because <code>plt.show()</code> was called <b>before</b> <code>plt.savefig()</code>. <code>show()</code> clears the current figure. Always <b>save first, then show</b>.</p>
+</div>
+
+<h3>PNG vs SVG vs PDF</h3>
+<table class="tight">
+<tr><th style="width:80px">Format</th><th>Type</th><th>Use for</th></tr>
+<tr><td>PNG / JPG</td><td>Raster (pixels)</td><td>Web, PPT, notebooks. Blurs on zoom.</td></tr>
+<tr><td>SVG / PDF / EPS</td><td>Vector</td><td>Reports, research papers. Sharp at any zoom.</td></tr>
+</table>
+
+<h3>Backends &amp; Jupyter magics</h3>
+<table class="tight">
+<tr><th style="width:170px">Command</th><th>Meaning</th></tr>
+<tr><td><code>%matplotlib inline</code></td><td>Static image inside the notebook (default)</td></tr>
+<tr><td><code>%matplotlib notebook</code> / <code>widget</code></td><td>Interactive chart (zoom, pan) inside the notebook</td></tr>
+<tr><td><code>matplotlib.use('Agg')</code></td><td>Non-GUI backend. Needed on servers with no display &mdash; for saving files only.</td></tr>
+<tr><td><code>plt.close()</code> / <code>plt.close('all')</code></td><td>Free memory in loops that create many figures</td></tr>
+</table>
+<p class="nb">"<b>Agg</b>" = Anti-Grain Geometry. Interview-worthy: if a plotting script crashes on a Linux server with "no display name", the fix is <code>matplotlib.use('Agg')</code>.</p>
+</section>
+
+<!-- ================= 18 ================= -->
+<section class="cont">
+<h2 class="sec"><span class="n">18</span>Animation (FuncAnimation)</h2>
+<pre><code>from matplotlib.animation import FuncAnimation
+
+fig, ax = plt.subplots()
+line, = ax.plot([], [])             <span class="c"># empty line; comma unpacks the list</span>
+ax.set_xlim(0, 10); ax.set_ylim(-1, 1)
+
+def update(frame):
+    x = np.linspace(0, 10, 200)
+    y = np.sin(x + frame/10)
+    line.set_data(x, y)             <span class="c"># update data, do not re-plot</span>
+    return line,
+
+ani = FuncAnimation(fig, update, frames=100, interval=50, blit=True)
+ani.save('wave.gif', writer='pillow', fps=20)</code></pre>
+<table class="tight">
+<tr><th style="width:110px">Parameter</th><th>Meaning</th></tr>
+<tr><td><code>frames</code></td><td>How many frames (or a list of values passed to <code>update</code>)</td></tr>
+<tr><td><code>interval</code></td><td>Delay between frames in milliseconds (50 ms = 20 FPS)</td></tr>
+<tr><td><code>blit=True</code></td><td>Redraw only what changed &rarr; much faster</td></tr>
+<tr><td><code>repeat</code></td><td>Loop the animation or stop at the end</td></tr>
+</table>
+<p class="nb">Save as GIF with <code>pillow</code>, as MP4 with <code>ffmpeg</code>. <code>ArtistAnimation</code> is the other class: you pre-build a list of frames instead of a function.</p>
+</section>
+
+<!-- ================= 19 ================= -->
+<section class="cont">
+<h2 class="sec"><span class="n">19</span>Matplotlib vs Seaborn vs Plotly vs Pandas .plot()</h2>
+<table>
+<tr><th style="width:100px">Library</th><th>Built on</th><th>Strength</th><th>Weakness</th></tr>
+<tr><td><b>Matplotlib</b></td><td>&mdash;</td><td>Full control over every element; works everywhere; can save any format</td><td>Verbose; default look is plain; no statistics</td></tr>
+<tr><td><b>Seaborn</b></td><td>Matplotlib</td><td>Beautiful defaults; statistical plots in 1 line; works directly with DataFrames (<code>hue</code>, <code>col</code>)</td><td>Less low-level control; for fine tuning you fall back to Matplotlib</td></tr>
+<tr><td><b>Pandas .plot()</b></td><td>Matplotlib</td><td>Fastest for quick EDA: <code>df.plot(kind='bar')</code></td><td>Very limited customization</td></tr>
+<tr><td><b>Plotly</b></td><td>plotly.js (web)</td><td>Interactive: hover, zoom, dropdown; good for dashboards (Dash/Streamlit)</td><td>Heavier; big HTML output</td></tr>
+</table>
+<div class="box int">
+  <div class="bt">Best answer for "Matplotlib or Seaborn?"</div>
+  <p>"They are not competitors &mdash; Seaborn is a wrapper built on top of Matplotlib. I use Seaborn to get a good statistical chart quickly in one line, and then use Matplotlib functions on the same axes to fine-tune titles, limits and annotations. Every Seaborn axes-level function returns a Matplotlib Axes object, so both mix freely."</p>
+</div>
+</section>
+
+<!-- ================= 20 ================= -->
+<section>
+<h2 class="sec"><span class="n">20</span>Common Errors + Cheat Sheet</h2>
+<table>
+<tr><th style="width:230px">Problem</th><th>Reason &amp; fix</th></tr>
+<tr><td>Chart does not appear in a .py script</td><td><code>plt.show()</code> missing</td></tr>
+<tr><td>Saved file is blank</td><td><code>savefig()</code> called after <code>show()</code>. Save first.</td></tr>
+<tr><td>Labels are cut off in the saved image</td><td>Use <code>bbox_inches='tight'</code> or <code>plt.tight_layout()</code></td></tr>
+<tr><td>Legend not showing</td><td><code>label=</code> not given in the plot call</td></tr>
+<tr><td><code>TypeError: 'AxesSubplot' object is not subscriptable</code></td><td>Only one subplot exists, so <code>ax</code> is not an array. Use <code>ax</code>, not <code>ax[0]</code>.</td></tr>
+<tr><td>Charts keep stacking on each other</td><td>Same current figure is being reused. Call <code>plt.figure()</code> for a new one or use the OO interface.</td></tr>
+<tr><td>Memory warning after many figures</td><td>Add <code>plt.close()</code> inside the loop</td></tr>
+<tr><td>x-axis labels overlapping</td><td><code>plt.xticks(rotation=45)</code> or use <code>barh</code></td></tr>
+<tr><td>"No display name" error on a server</td><td><code>matplotlib.use('Agg')</code> before importing pyplot</td></tr>
+</table>
+
+<h3>Best practices (good closing lines in an interview)</h3>
+<ul>
+  <li>Always label axes and add units; a chart without labels is useless.</li>
+  <li>Use the OO interface for anything bigger than a quick look.</li>
+  <li>Bar chart y-axis must start at 0.</li>
+  <li>Use colour-blind-friendly colormaps (<code>viridis</code>); do not use colour as the only signal.</li>
+  <li>Remove chart junk: extra gridlines, 3D effects, heavy borders.</li>
+  <li>One chart should answer one question.</li>
+</ul>
+
+<hr>
+<div class="sheet">
+<h3 style="margin-bottom:2px">Matplotlib Cheat Sheet (last-minute revision)</h3>
+<div class="two">
+<div>
+<h4>Setup</h4>
+<pre><code>import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(10,5))</code></pre>
+<h4>Plot types</h4>
+<pre><code>ax.plot(x,y)          # line
+ax.scatter(x,y)       # scatter
+ax.bar(x,h)/barh      # bar
+ax.hist(v,bins=20)    # histogram
+ax.pie(v,labels=l)    # pie
+ax.boxplot(d)         # box
+ax.violinplot(d)      # violin
+ax.stackplot(x,y1,y2) # area
+ax.fill_between(x,a,b)# band
+ax.errorbar(x,y,yerr=e)
+ax.imshow(mat)        # heatmap
+ax.hexbin(x,y)        # density</code></pre>
+<h4>Labels</h4>
+<pre><code>ax.set_title('t')
+ax.set_xlabel('x'); ax.set_ylabel('y')
+ax.legend(loc='best')
+ax.grid(alpha=.4)
+fig.suptitle('all')</code></pre>
+</div>
+<div>
+<h4>Axis</h4>
+<pre><code>ax.set_xlim(0,10)
+ax.set_xticks(t); ax.set_xticklabels(l)
+plt.xticks(rotation=45)
+ax.set_yscale('log')
+ax2 = ax.twinx()
+ax.spines['top'].set_visible(False)</code></pre>
+<h4>Style</h4>
+<pre><code>color/c, linestyle/ls, linewidth/lw,
+marker, markersize/ms, alpha, label
+plt.style.use('ggplot')
+plt.rcParams['figure.figsize']=(10,5)
+cmap='viridis' (seq) 'coolwarm' (div)
+            'tab10' (categorical)</code></pre>
+<h4>Subplots &amp; save</h4>
+<pre><code>fig, ax = plt.subplots(2,2, sharey=True)
+ax[0,0].plot(...)
+gridspec.GridSpec(2,2,height_ratios=[2,1])
+plt.tight_layout()
+plt.savefig('a.png', dpi=300,
+            bbox_inches='tight')   # BEFORE show
+plt.show(); plt.close()</code></pre>
+<h4>Annotate</h4>
+<pre><code>ax.text(x,y,'s')
+ax.annotate('s', xy=(x,y), xytext=(a,b),
+      arrowprops=dict(arrowstyle='-&gt;'))
+ax.axhline(50, ls='--')</code></pre>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ================= 21 ================= -->
+<section>
+<h2 class="sec"><span class="n">21</span>Real Interview Questions &amp; Answers</h2>
+<p class="lead">Answers are written the way you can actually speak them &mdash; short, simple, no heavy English.</p>
+
+<h3>A. Basic / theory</h3>
+
+<div class="qa"><p class="q">1. What is Matplotlib and why is it used?</p>
+<p class="a">It is Python's base plotting library. It is used to make charts for EDA and reporting &mdash; line, bar, scatter, histogram and more. Other libraries like Seaborn and Pandas plotting are built on top of it, so it is the foundation of visualization in Python.</p></div>
+
+<div class="qa"><p class="q">2. Explain the architecture of Matplotlib.</p>
+<p class="a">Three layers. Backend layer actually draws the output (Agg for PNG, PDF for files, TkAgg for windows). Artist layer holds all objects we see &mdash; Figure, Axes, Line2D, Text; each one is an Artist. Scripting layer is <code>pyplot</code>, the simple interface we normally write.</p></div>
+
+<div class="qa"><p class="q">3. Difference between Figure, Axes and Axis?</p>
+<p class="a">Figure is the whole canvas, like a page. Axes is one plot drawn on that page &mdash; it has the data, title and labels. Axis is the x or y number line of that plot, which controls ticks and limits. One Figure can hold many Axes, and one Axes has two Axis objects.</p></div>
+
+<div class="qa"><p class="q">4. What is the difference between pyplot interface and object-oriented interface?</p>
+<p class="a">pyplot is a state machine &mdash; it remembers the "current figure" and all commands go there automatically. In the OO interface I get the Figure and Axes objects in variables and call methods on them, like <code>ax.set_title()</code>. For a quick chart pyplot is fine, but for multiple subplots or a reusable function the OO way is safer and clearer.</p></div>
+
+<div class="qa"><p class="q">5. What does plt.show() do, and why is my plot not visible?</p>
+<p class="a">It sends the figure to the backend and displays it, and then clears the current figure. In a Python script, nothing appears without it. In Jupyter with <code>%matplotlib inline</code> plots show automatically.</p></div>
+
+<div class="qa"><p class="q">6. What is an Artist in Matplotlib?</p>
+<p class="a">Anything visible on the figure is an Artist object &mdash; the Figure itself, the Axes, a line, a tick, a text, a legend. There are two kinds: containers (Figure, Axes) and primitives (Line2D, Text, Patch).</p></div>
+
+<div class="qa"><p class="q">7. What is a backend? Which one do you use on a server?</p>
+<p class="a">The backend is the engine that actually renders the chart. On a server with no screen I use <code>matplotlib.use('Agg')</code> before importing pyplot &mdash; it is a non-GUI backend that can only write files, which is exactly what is needed there.</p></div>
+
+<h3>B. Charts and chart selection</h3>
+
+<div class="qa"><p class="q">8. Difference between a histogram and a bar chart?</p>
+<p class="a">Histogram is for one numerical column &mdash; the x-axis has ranges (bins) and the y-axis is the count of values in that range, so bars touch each other. A bar chart is for categorical data &mdash; each bar is a separate category with a gap, and the bars can be reordered. Histogram answers "how is the data distributed", bar chart answers "which category is bigger".</p></div>
+
+<div class="qa"><p class="q">9. What is the effect of changing the number of bins?</p>
+<p class="a">Too few bins hide the real shape of the data; too many bins make it noisy and spiky. Default is 10, and <code>bins='auto'</code> picks a good number using statistical rules like Freedman&ndash;Diaconis.</p></div>
+
+<div class="qa"><p class="q">10. When would you use a line plot instead of a bar chart?</p>
+<p class="a">When the x-axis is continuous and ordered, mostly time. A line shows trend and connects points, which only makes sense if the points are in order. For separate categories I use bars.</p></div>
+
+<div class="qa"><p class="q">11. plt.plot(x, y, 'o') vs plt.scatter(x, y) &mdash; which is better?</p>
+<p class="a"><code>plot</code> with a marker is faster for large data, but all points share the same colour and size. <code>scatter</code> is slower but allows a different colour and size for every point, so I use it when I want to encode extra variables through <code>c</code> and <code>s</code>.</p></div>
+
+<div class="qa"><p class="q">12. How do you show 4 variables in one 2D chart?</p>
+<p class="a">With a scatter plot: x position, y position, colour (<code>c</code> with a cmap) and dot size (<code>s</code>). Size encoding makes it a bubble chart. If a variable is categorical, I can use marker shape or make subplots per category.</p></div>
+
+<div class="qa"><p class="q">13. Why are pie charts not recommended?</p>
+<p class="a">Because people judge lengths better than angles and areas. With more than four or five slices, or slices of similar size, it becomes hard to read. A horizontal bar chart shows the same information more clearly.</p></div>
+
+<div class="qa"><p class="q">14. How do you read a box plot? What is IQR?</p>
+<p class="a">The box shows Q1, median and Q3, so the box itself is the middle 50% of the data. IQR = Q3 &minus; Q1. Whiskers extend up to 1.5&times;IQR, and points beyond that are drawn as outliers. It is best for comparing many groups side by side, but it cannot show two peaks &mdash; for that I use a histogram or a violin plot.</p></div>
+
+<div class="qa"><p class="q">15. Too many points are overlapping in my scatter plot. What do you do?</p>
+<p class="a">That is overplotting. I reduce <code>alpha</code> so density becomes visible, or use <code>hexbin</code> or a 2D KDE, or plot a random sample of the rows.</p></div>
+
+<h3>C. Code / practical</h3>
+
+<div class="qa"><p class="q">16. How do you plot 4 charts in one figure?</p>
+<p class="a"><code>fig, ax = plt.subplots(2, 2, figsize=(12,8))</code>, then draw on <code>ax[0,0]</code> to <code>ax[1,1]</code>, and finally <code>plt.tight_layout()</code>. If the charts must be compared on the same scale, I add <code>sharey=True</code>.</p></div>
+
+<div class="qa"><p class="q">17. Difference between plt.subplot() and plt.subplots()?</p>
+<p class="a"><code>plt.subplots()</code> (with s) creates the figure and all the axes at once and returns <code>fig, ax</code>. <code>plt.subplot()</code> creates or selects one axes at a time using 1-based indexing, like <code>plt.subplot(2,2,1)</code>. The first one is the modern way.</p></div>
+
+<div class="qa"><p class="q">18. How do you make subplots of different sizes?</p>
+<p class="a">With GridSpec. I create <code>gs = gridspec.GridSpec(2, 2, height_ratios=[2,1])</code> and then use slicing like <code>fig.add_subplot(gs[0, :])</code> so one plot spans the whole top row. <code>plt.subplot2grid</code> with <code>rowspan</code>/<code>colspan</code> does the same thing.</p></div>
+
+<div class="qa"><p class="q">19. Difference between fig.suptitle() and ax.set_title()?</p>
+<p class="a"><code>suptitle</code> is the main title of the whole figure; <code>set_title</code> is the title of one subplot.</p></div>
+
+<div class="qa"><p class="q">20. What does tight_layout() do?</p>
+<p class="a">It automatically adjusts the spacing and padding so titles and tick labels do not overlap or get cut off. <code>constrained_layout=True</code> is the newer and smarter version.</p></div>
+
+<div class="qa"><p class="q">21. How do you plot two different units on one chart?</p>
+<p class="a">With a twin axis: <code>ax2 = ax1.twinx()</code> shares the x-axis and adds a second y-axis on the right. I colour each y-label to match its line so the reader knows which axis belongs to which line.</p></div>
+
+<div class="qa"><p class="q">22. How do you save a figure properly?</p>
+<p class="a"><code>plt.savefig('x.png', dpi=300, bbox_inches='tight')</code>, and always <b>before</b> <code>plt.show()</code>, because <code>show()</code> clears the figure and you get a blank image. For reports I save PDF or SVG because they are vector formats and stay sharp on zoom.</p></div>
+
+<div class="qa"><p class="q">23. figsize and dpi &mdash; what is the relation?</p>
+<p class="a"><code>figsize</code> is in inches and <code>dpi</code> is dots per inch, so final pixels = figsize &times; dpi. For example <code>figsize=(8,4)</code> with <code>dpi=100</code> gives an 800&times;400 image.</p></div>
+
+<div class="qa"><p class="q">24. How do you change default settings for all plots?</p>
+<p class="a">Through <code>plt.rcParams</code>, for example <code>plt.rcParams['figure.figsize'] = (10,5)</code>. For the whole look at once I use <code>plt.style.use('ggplot')</code>. <code>plt.rcdefaults()</code> resets everything.</p></div>
+
+<div class="qa"><p class="q">25. Difference between text() and annotate()?</p>
+<p class="a"><code>text()</code> just writes text at a position. <code>annotate()</code> writes text and can draw an arrow from the text to a specific data point using <code>xy</code>, <code>xytext</code> and <code>arrowprops</code>.</p></div>
+
+<div class="qa"><p class="q">26. My legend is not appearing. Why?</p>
+<p class="a">Because I did not pass <code>label=</code> in the plotting call. <code>plt.legend()</code> only picks up artists that have a label.</p></div>
+
+<div class="qa"><p class="q">27. What are the types of colormaps and when do you use each?</p>
+<p class="a">Sequential for low-to-high values like <code>viridis</code> or <code>Blues</code>. Diverging when there is a meaningful centre, like a correlation matrix from &minus;1 to +1, using <code>coolwarm</code> or <code>RdBu</code>. Qualitative for unordered categories, like <code>tab10</code>. I avoid <code>jet</code> because it is not perceptually uniform and is bad for colour-blind users.</p></div>
+
+<div class="qa"><p class="q">28. What is meshgrid and why is it needed for 3D plots?</p>
+<p class="a"><code>np.meshgrid</code> converts two 1D arrays into two 2D coordinate grids, so every cell has its own (x, y) pair. Then Z = f(X, Y) can be computed for the whole surface in one vectorized operation. <code>plot_surface</code> and <code>contour</code> need this 2D form.</p></div>
+
+<div class="qa"><p class="q">29. Matplotlib vs Seaborn &mdash; which one do you use?</p>
+<p class="a">Both together. Seaborn is built on Matplotlib and gives beautiful statistical plots in one line with DataFrame support like <code>hue</code> and <code>col</code>. But for fine control &mdash; limits, annotations, custom ticks &mdash; I use Matplotlib on the same axes object that Seaborn returns.</p></div>
+
+<div class="qa"><p class="q">30. How do you create an animated chart?</p>
+<p class="a">With <code>FuncAnimation</code>. I create the figure and an empty line, write an <code>update(frame)</code> function that calls <code>line.set_data()</code> with new values, and pass it to <code>FuncAnimation(fig, update, frames=100, interval=50, blit=True)</code>. Then <code>ani.save('x.gif', writer='pillow')</code> saves it.</p></div>
+
+<div class="qa"><p class="q">31. Your chart will be shown to a business team. What would you take care of?</p>
+<p class="a">Clear title that states the insight, labelled axes with units, no chart junk, bar charts starting at 0, limited colours with a colour-blind-safe palette, and the most important number annotated directly on the chart. One chart should answer one question.</p></div>
+
+<div class="box int" style="margin-top:18px">
+  <div class="bt">Last tip</div>
+  <p>In a visualization interview, never answer only with the function name. Say <b>why</b> that chart &mdash; "two numerical columns, so scatter", "one numerical column, so histogram". That single habit makes the answer sound experienced.</p>
+</div>
+</section>
+
+</body>
+</html>

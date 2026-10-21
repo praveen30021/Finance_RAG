@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Seaborn Complete Revision Guide</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  :root{ --accent:#1f8a70; --accent-soft:#e6f4f0; }
+  .cover .badge{background:#e6f4f0; color:#1f8a70; border-color:#bfe3d9}
+  .box.def{background:#e6f4f0; border-color:#bfe3d9}
+  .box.int{background:#eef4ff; border-color:#ccdcf7}
+  .box.int .bt{color:#2b5fae}
+  pre{border-left-color:#1f8a70}
+</style>
+</head>
+<body>
+
+<!-- ================= COVER ================= -->
+<div class="cover">
+  <div class="kicker">Placement Interview Revision</div>
+  <h1>Seaborn<br>Complete Revision Guide</h1>
+  <div class="rule"></div>
+  <h2>Every plot type, figure-level vs axes-level, diagrams, code and real interview questions.</h2>
+  <div class="badges">
+    <span class="badge">18 Topics</span>
+    <span class="badge">All Plot Types</span>
+    <span class="badge">Diagrams</span>
+    <span class="badge">Gotchas</span>
+    <span class="badge">30 Q&amp;A</span>
+  </div>
+  <div class="box def">
+    <div class="bt">The single most important thing in this doc</div>
+    <p><b>Topic 3: Figure-level vs Axes-level functions.</b> This is the #1 Seaborn interview question and it also explains every confusing error you face (why <code>figsize</code> does not work, why <code>ax=</code> fails, why some functions return a Grid). Read that topic twice.</p>
+  </div>
+  <div class="meta">Revision notes &mdash; Statistical Data Visualization with Seaborn &nbsp;·&nbsp; Companion doc: <b>Matplotlib Complete Revision Guide</b></div>
+</div>
+
+<!-- ================= TOC ================= -->
+<section class="cont">
+<h2 class="sec"><span class="n">#</span>Contents</h2>
+<div class="toc">
+  <div class="ti"><span class="i">1</span><span>What is Seaborn + Why over Matplotlib</span></div>
+  <div class="ti"><span class="i">2</span><span>Datasets &amp; Long vs Wide data</span></div>
+  <div class="ti"><span class="i">3</span><span>Figure-level vs Axes-level (CORE)</span></div>
+  <div class="ti"><span class="i">4</span><span>Relational: scatterplot, lineplot, relplot</span></div>
+  <div class="ti"><span class="i">5</span><span>Categorical scatter: stripplot, swarmplot</span></div>
+  <div class="ti"><span class="i">6</span><span>boxplot, violinplot, boxenplot</span></div>
+  <div class="ti"><span class="i">7</span><span>barplot, countplot, pointplot</span></div>
+  <div class="ti"><span class="i">8</span><span>Distribution: histplot, kdeplot, ecdf, displot</span></div>
+  <div class="ti"><span class="i">9</span><span>jointplot &amp; JointGrid</span></div>
+  <div class="ti"><span class="i">10</span><span>pairplot &amp; PairGrid</span></div>
+  <div class="ti"><span class="i">11</span><span>heatmap &amp; clustermap</span></div>
+  <div class="ti"><span class="i">12</span><span>Regression: regplot, lmplot, residplot</span></div>
+  <div class="ti"><span class="i">13</span><span>FacetGrid (multiplots)</span></div>
+  <div class="ti"><span class="i">14</span><span>Styling: theme, style, context, palette</span></div>
+  <div class="ti"><span class="i">15</span><span>Which plot when &mdash; master table</span></div>
+  <div class="ti"><span class="i">16</span><span>Common errors &amp; gotchas</span></div>
+  <div class="ti"><span class="i">17</span><span>Cheat sheet</span></div>
+  <div class="ti"><span class="i">18</span><span>Real Interview Questions &amp; Answers</span></div>
+</div>
+
+<h3>The 5 questions interviewers always ask about Seaborn</h3>
+<table class="tight">
+<tr><th style="width:28px">#</th><th>Question</th><th>Topic</th></tr>
+<tr><td>1</td><td>Seaborn vs Matplotlib &mdash; difference and when to use which</td><td>1</td></tr>
+<tr><td>2</td><td>Figure-level vs Axes-level functions</td><td>3</td></tr>
+<tr><td>3</td><td>stripplot vs swarmplot / boxplot vs violinplot</td><td>5, 6</td></tr>
+<tr><td>4</td><td>barplot vs countplot (and what the black line means)</td><td>7</td></tr>
+<tr><td>5</td><td>How do you check correlation between all columns?</td><td>11</td></tr>
+</table>
+</section>
+
+<!-- ================= 1 ================= -->
+<section>
+<h2 class="sec"><span class="n">1</span>What is Seaborn + Why over Matplotlib</h2>
+
+<p class="lead">Seaborn is a <b>statistical</b> data visualization library built <b>on top of Matplotlib</b>, and it works directly with Pandas DataFrames.</p>
+
+<h3>What it adds on top of Matplotlib</h3>
+<ul>
+  <li><b>Statistics built in</b> &mdash; it computes mean, confidence interval, KDE, regression line for you. Matplotlib only draws what you give it.</li>
+  <li><b>DataFrame aware</b> &mdash; you pass column <i>names</i>: <code>sns.scatterplot(data=df, x='age', y='fare', hue='sex')</code>.</li>
+  <li><b>hue / size / style / col / row</b> &mdash; one keyword splits the plot by a category. In Matplotlib you would write a loop.</li>
+  <li><b>Better defaults</b> &mdash; nicer colours, grid, spacing, automatic legend.</li>
+  <li><b>Complex plots in one line</b> &mdash; pairplot, heatmap, violin, jointplot.</li>
+</ul>
+
+<div class="box int">
+  <div class="bt">In interview, say this</div>
+  <p>"Seaborn is not a replacement for Matplotlib, it is a wrapper built on it. Seaborn handles the statistical work and the DataFrame interface, while Matplotlib handles the actual drawing. Every axes-level Seaborn function returns a Matplotlib Axes, so I use Seaborn for the chart and Matplotlib for fine-tuning title, limits and annotations."</p>
+</div>
+
+<table>
+<tr><th style="width:130px">Point</th><th>Matplotlib</th><th>Seaborn</th></tr>
+<tr><td>Level</td><td>Low level, full control</td><td>High level, fewer lines</td></tr>
+<tr><td>Data input</td><td>Arrays / lists</td><td>DataFrame + column names</td></tr>
+<tr><td>Statistics</td><td>You compute yourself</td><td>Built in (mean, CI, KDE, regression)</td></tr>
+<tr><td>Grouping by category</td><td>Manual loop</td><td><code>hue</code>, <code>col</code>, <code>row</code>, <code>style</code>, <code>size</code></td></tr>
+<tr><td>Default look</td><td>Plain</td><td>Attractive themes</td></tr>
+<tr><td>Best for</td><td>Custom and precise charts</td><td>Fast EDA and statistical charts</td></tr>
+</table>
+
+<pre><code>import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+
+sns.set_theme()               <span class="c"># turn on seaborn look</span>
+print(sns.__version__)</code></pre>
+</section>
+
+<!-- ================= 2 ================= -->
+<section>
+<h2 class="sec"><span class="n">2</span>Datasets &amp; Long vs Wide Data</h2>
+
+<h3>Built-in practice datasets</h3>
+<pre><code>sns.get_dataset_names()
+tips    = sns.load_dataset('tips')      <span class="c"># restaurant bills - most used</span>
+titanic = sns.load_dataset('titanic')
+iris    = sns.load_dataset('iris')
+flights = sns.load_dataset('flights')   <span class="c"># time series, good for heatmap</span></code></pre>
+
+<h3>Long (tidy) vs Wide format &mdash; important concept</h3>
+<p>Seaborn mostly wants data in <b>long / tidy</b> format: <b>one row = one observation</b>, and every variable has its own column.</p>
+
+<div class="fig">
+<svg viewBox="0 0 580 215" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif" font-size="10.5">
+  <text x="20" y="16" font-weight="700" fill="#9a5b00">WIDE format (spreadsheet style)</text>
+  <g stroke="#dfe4ec" fill="#fff8ec">
+    <rect x="20" y="26" width="70" height="22"/><rect x="90" y="26" width="70" height="22"/><rect x="160" y="26" width="70" height="22"/>
+    <rect x="20" y="48" width="70" height="22"/><rect x="90" y="48" width="70" height="22"/><rect x="160" y="48" width="70" height="22"/>
+    <rect x="20" y="70" width="70" height="22"/><rect x="90" y="70" width="70" height="22"/><rect x="160" y="70" width="70" height="22"/>
+  </g>
+  <g fill="#1b2230">
+    <text x="30" y="41" font-weight="700">month</text><text x="102" y="41" font-weight="700">2023</text><text x="172" y="41" font-weight="700">2024</text>
+    <text x="30" y="63">Jan</text><text x="102" y="63">100</text><text x="172" y="63">140</text>
+    <text x="30" y="85">Feb</text><text x="102" y="85">120</text><text x="172" y="85">160</text>
+  </g>
+  <text x="20" y="112" fill="#9a5b00">Year is hidden in the column NAMES &rarr; hard for hue=</text>
+
+  <path d="M250 60 L300 60" stroke="#1f8a70" stroke-width="2" marker-end="url(#a2)"/>
+  <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#1f8a70"/></marker></defs>
+  <text x="252" y="52" font-size="9" fill="#1f8a70" font-weight="700">df.melt()</text>
+
+  <text x="320" y="16" font-weight="700" fill="#1f8a70">LONG / TIDY format (seaborn style)</text>
+  <g stroke="#dfe4ec" fill="#e6f4f0">
+    <rect x="320" y="26" width="62" height="22"/><rect x="382" y="26" width="62" height="22"/><rect x="444" y="26" width="62" height="22"/>
+    <rect x="320" y="48" width="62" height="22"/><rect x="382" y="48" width="62" height="22"/><rect x="444" y="48" width="62" height="22"/>
+    <rect x="320" y="70" width="62" height="22"/><rect x="382" y="70" width="62" height="22"/><rect x="444" y="70" width="62" height="22"/>
+    <rect x="320" y="92" width="62" height="22"/><rect x="382" y="92" width="62" height="22"/><rect x="444" y="92" width="62" height="22"/>
+    <rect x="320" y="114" width="62" height="22"/><rect x="382" y="114" width="62" height="22"/><rect x="444" y="114" width="62" height="22"/>
+  </g>
+  <g fill="#1b2230">
+    <text x="328" y="41" font-weight="700">month</text><text x="390" y="41" font-weight="700">year</text><text x="452" y="41" font-weight="700">sales</text>
+    <text x="328" y="63">Jan</text><text x="390" y="63">2023</text><text x="452" y="63">100</text>
+    <text x="328" y="85">Jan</text><text x="390" y="85">2024</text><text x="452" y="85">140</text>
+    <text x="328" y="107">Feb</text><text x="390" y="107">2023</text><text x="452" y="107">120</text>
+    <text x="328" y="129">Feb</text><text x="390" y="129">2024</text><text x="452" y="129">160</text>
+  </g>
+  <text x="320" y="152" fill="#1f8a70">Now: x='month', y='sales', hue='year' just works</text>
+  <rect x="20" y="168" width="540" height="36" rx="7" fill="#eef4ff" stroke="#ccdcf7"/>
+  <text x="34" y="190" fill="#1b2230">Rule: <tspan font-weight="700">one row = one observation</tspan>, one column = one variable. Convert with df.melt(); reverse with df.pivot().</text>
+</svg>
+<div class="cap">Figure 2.1 &mdash; Long format is what Seaborn's <code>hue</code>, <code>col</code> and <code>row</code> need.</div>
+</div>
+
+<pre><code>long_df = wide_df.melt(id_vars='month', var_name='year', value_name='sales')
+sns.lineplot(data=long_df, x='month', y='sales', hue='year')</code></pre>
+</section>
+
+<!-- ================= 3 ================= -->
+<section>
+<h2 class="sec"><span class="n">3</span>Figure-level vs Axes-level Functions <span style="font-size:10pt;color:#1f8a70">(CORE TOPIC)</span></h2>
+
+<p class="lead">Seaborn has two kinds of functions. Knowing the difference answers half the Seaborn interview.</p>
+
+<div class="fig">
+<svg viewBox="0 0 580 275" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif">
+  <!-- level labels -->
+  <text x="20" y="20" font-size="10.5" font-weight="700" fill="#1f8a70">FIGURE-LEVEL (3 big ones + 2 extra)</text>
+  <text x="20" y="135" font-size="10.5" font-weight="700" fill="#2b5fae">AXES-LEVEL (the real workers)</text>
+
+  <!-- fig level boxes -->
+  <g>
+    <rect x="22" y="30" width="118" height="30" rx="7" fill="#1f8a70"/><text x="81" y="50" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">relplot</text>
+    <rect x="160" y="30" width="118" height="30" rx="7" fill="#1f8a70"/><text x="219" y="50" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">displot</text>
+    <rect x="298" y="30" width="118" height="30" rx="7" fill="#1f8a70"/><text x="357" y="50" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">catplot</text>
+    <rect x="436" y="30" width="122" height="30" rx="7" fill="#7aa98f"/><text x="497" y="50" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">lmplot / jointplot</text>
+  </g>
+  <g font-size="9" fill="#5d6678" text-anchor="middle">
+    <text x="81" y="74">relationship</text><text x="219" y="74">distribution</text><text x="357" y="74">categorical</text><text x="497" y="74">regression / bivariate</text>
+  </g>
+
+  <!-- connectors -->
+  <g stroke="#b9c4d2" fill="none">
+    <path d="M81 78 L81 95 M50 95 L112 95 M50 95 L50 121 M112 95 L112 121"/>
+    <path d="M219 78 L219 95 M175 95 L263 95 M175 95 L175 121 M219 95 L219 121 M263 95 L263 121"/>
+    <path d="M357 78 L357 95 M310 95 L404 95 M310 95 L310 121 M357 95 L357 121 M404 95 L404 121"/>
+  </g>
+
+  <!-- axes level boxes row1 -->
+  <g font-size="9.5" text-anchor="middle">
+    <rect x="18" y="140" width="64" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="50" y="156" fill="#2b5fae">scatterplot</text>
+    <rect x="86" y="140" width="56" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="114" y="156" fill="#2b5fae">lineplot</text>
+
+    <rect x="149" y="140" width="52" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="175" y="156" fill="#2b5fae">histplot</text>
+    <rect x="205" y="140" width="48" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="229" y="156" fill="#2b5fae">kdeplot</text>
+    <rect x="257" y="140" width="52" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="283" y="156" fill="#2b5fae">ecdfplot</text>
+
+    <rect x="313" y="140" width="52" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="339" y="156" fill="#2b5fae">stripplot</text>
+    <rect x="369" y="140" width="56" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="397" y="156" fill="#2b5fae">swarmplot</text>
+    <rect x="429" y="140" width="48" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="453" y="156" fill="#2b5fae">boxplot</text>
+    <rect x="481" y="140" width="56" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="509" y="156" fill="#2b5fae">violinplot</text>
+
+    <rect x="313" y="170" width="52" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="339" y="186" fill="#2b5fae">barplot</text>
+    <rect x="369" y="170" width="62" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="400" y="186" fill="#2b5fae">countplot</text>
+    <rect x="435" y="170" width="58" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="464" y="186" fill="#2b5fae">pointplot</text>
+    <rect x="497" y="170" width="62" height="24" rx="5" fill="#eef4ff" stroke="#2b5fae"/><text x="528" y="186" fill="#2b5fae">boxenplot</text>
+  </g>
+
+  <!-- bottom note -->
+  <rect x="18" y="208" width="268" height="56" rx="8" fill="#e6f4f0" stroke="#bfe3d9"/>
+  <text x="32" y="226" font-size="10" font-weight="700" fill="#1f8a70">Figure-level</text>
+  <text x="32" y="241" font-size="9.5" fill="#1b2230">returns a FacetGrid &middot; makes its own figure</text>
+  <text x="32" y="255" font-size="9.5" fill="#1b2230">supports col / row &middot; size via height + aspect</text>
+
+  <rect x="296" y="208" width="264" height="56" rx="8" fill="#eef4ff" stroke="#ccdcf7"/>
+  <text x="310" y="226" font-size="10" font-weight="700" fill="#2b5fae">Axes-level</text>
+  <text x="310" y="241" font-size="9.5" fill="#1b2230">returns a Matplotlib Axes &middot; draws on current axes</text>
+  <text x="310" y="255" font-size="9.5" fill="#1b2230">accepts ax= &middot; works inside plt.subplots()</text>
+</svg>
+<div class="cap">Figure 3.1 &mdash; The Seaborn function map. Each figure-level function is a wrapper over its axes-level family, selected by <code>kind=</code>.</div>
+</div>
+
+<h3>The 3 families (remember this table &mdash; it organises all of Seaborn)</h3>
+<table>
+<tr><th style="width:85px">Figure-level</th><th style="width:95px">Family</th><th>Axes-level functions it can call (<code>kind=</code>)</th></tr>
+<tr><td><code>relplot</code></td><td>Relational</td><td><code>scatterplot</code> (default), <code>lineplot</code></td></tr>
+<tr><td><code>displot</code></td><td>Distribution</td><td><code>histplot</code> (default), <code>kdeplot</code>, <code>ecdfplot</code> (+ <code>rugplot</code>)</td></tr>
+<tr><td><code>catplot</code></td><td>Categorical</td><td><code>stripplot</code> (default), <code>swarmplot</code>, <code>boxplot</code>, <code>violinplot</code>, <code>boxenplot</code>, <code>barplot</code>, <code>countplot</code>, <code>pointplot</code></td></tr>
+<tr><td><code>lmplot</code></td><td>Regression</td><td><code>regplot</code></td></tr>
+<tr><td><code>jointplot</code> / <code>pairplot</code></td><td>Grid plots</td><td>return <code>JointGrid</code> / <code>PairGrid</code></td></tr>
+</table>
+
+<h3>Same chart, two ways</h3>
+<pre><code><span class="c"># axes-level</span>
+fig, ax = plt.subplots(figsize=(8,5))
+sns.scatterplot(data=tips, x='total_bill', y='tip', hue='sex', ax=ax)
+
+<span class="c"># figure-level - same chart + can split into panels</span>
+sns.relplot(data=tips, x='total_bill', y='tip', hue='sex',
+            kind='scatter', col='time', height=5, aspect=1.2)</code></pre>
+
+<table>
+<tr><th style="width:130px">Point</th><th>Figure-level</th><th>Axes-level</th></tr>
+<tr><td>Returns</td><td><code>FacetGrid</code> object (<code>g</code>)</td><td>Matplotlib <code>Axes</code></td></tr>
+<tr><td>Creates figure?</td><td>Yes, its own figure &mdash; it controls everything</td><td>No, draws on the current/given axes</td></tr>
+<tr><td><code>ax=</code> parameter</td><td><b>Not allowed</b> (TypeError)</td><td>Allowed</td></tr>
+<tr><td>Size control</td><td><code>height</code> + <code>aspect</code> (per panel)</td><td><code>figsize</code> in <code>plt.subplots()</code></td></tr>
+<tr><td><code>col</code> / <code>row</code> faceting</td><td>Yes &mdash; main advantage</td><td>No</td></tr>
+<tr><td>Legend</td><td>Outside the plot, automatic</td><td>Inside the plot</td></tr>
+<tr><td>Use inside subplots</td><td>No</td><td>Yes &mdash; this is why axes-level exists</td></tr>
+<tr><td>Customizing</td><td><code>g.set_axis_labels()</code>, <code>g.fig</code>, <code>g.axes</code></td><td>Normal matplotlib <code>ax.set_*()</code></td></tr>
+</table>
+
+<div class="box trap">
+  <div class="bt">Two errors this explains</div>
+  <p>1. <code>sns.displot(..., ax=ax)</code> &rarr; error, because figure-level functions make their own figure. Use <code>sns.histplot(..., ax=ax)</code> instead.<br>
+  2. <code>plt.figure(figsize=(12,6))</code> before a <code>catplot</code> does nothing &mdash; catplot creates a new figure. Use <code>height=</code> and <code>aspect=</code>.</p>
+</div>
+
+<div class="box int">
+  <div class="bt">In interview, say this</div>
+  <p>"Axes-level functions like <code>scatterplot</code> or <code>boxplot</code> draw on a single Matplotlib Axes and accept <code>ax=</code>, so they fit inside my own <code>plt.subplots()</code> grid. Figure-level functions like <code>relplot</code>, <code>displot</code> and <code>catplot</code> create and own the whole figure, return a FacetGrid, and support <code>col</code> and <code>row</code> to split data into panels. So: one panel inside my layout &rarr; axes-level; many panels split by a category &rarr; figure-level."</p>
+</div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section>
+<h2 class="sec"><span class="n">4</span>Relational Plots: scatterplot, lineplot, relplot</h2>
+<p class="lead">"Relational" = relationship between <b>two numerical</b> columns.</p>
+
+<h3>scatterplot</h3>
+<pre><code>sns.scatterplot(data=tips, x='total_bill', y='tip',
+                hue='sex',        <span class="c"># colour by category</span>
+                style='time',     <span class="c"># marker shape by category</span>
+                size='size',      <span class="c"># dot size by a column</span>
+                sizes=(20,200),   <span class="c"># min and max dot size</span>
+                palette='Set2', alpha=0.8)</code></pre>
+<p class="nb"><b>4 encoding channels:</b> x, y, <code>hue</code> (colour), <code>style</code> (shape), <code>size</code>. Using all at once makes it unreadable &mdash; use 3 at most.</p>
+
+<h3>lineplot</h3>
+<pre><code>sns.lineplot(data=flights, x='year', y='passengers', hue='month')</code></pre>
+<div class="box int">
+  <div class="bt">Most asked lineplot question: "what is the shaded band?"</div>
+  <p>If the same x value appears many times, <code>lineplot</code> automatically plots the <b>mean</b> of y and shades the <b>95% confidence interval</b> around it. Turn it off with <code>errorbar=None</code> (older versions: <code>ci=None</code>), or change the summary with <code>estimator='median'</code> / <code>estimator=np.sum</code>.</p>
+</div>
+<pre><code>sns.lineplot(data=df, x='day', y='sales', estimator='mean', errorbar=('ci',95))
+sns.lineplot(data=df, x='day', y='sales', errorbar='sd')     <span class="c"># std dev band</span>
+sns.lineplot(data=df, x='day', y='sales', errorbar=None)     <span class="c"># no band, faster</span>
+sns.lineplot(data=df, x='day', y='sales', markers=True, dashes=False)</code></pre>
+
+<h3>relplot &mdash; the figure-level version</h3>
+<pre><code>sns.relplot(data=tips, x='total_bill', y='tip',
+            kind='scatter',          <span class="c"># or 'line'</span>
+            hue='sex', col='time', row='smoker',
+            height=4, aspect=1.2)</code></pre>
+<p class="nb"><code>col='time'</code> makes one panel per value of <code>time</code>. <code>col_wrap=3</code> wraps panels into rows when there are many categories.</p>
+</section>
+
+<!-- ================= 5 ================= -->
+<section>
+<h2 class="sec"><span class="n">5</span>Categorical Scatter: stripplot &amp; swarmplot</h2>
+<p class="lead">Use when x is <b>categorical</b> and y is <b>numerical</b>, and you want to see <b>every single data point</b>.</p>
+
+<h3>stripplot</h3>
+<pre><code>sns.stripplot(data=tips, x='day', y='total_bill',
+              jitter=0.25,      <span class="c"># spread points sideways; jitter=False stacks them in a line</span>
+              hue='sex', dodge=True,   <span class="c"># split hue into separate columns</span>
+              size=5, alpha=0.7)</code></pre>
+<p>Points are placed randomly left/right (jitter) so they do not sit exactly on top of each other. <b>Points can still overlap.</b></p>
+
+<h3>swarmplot</h3>
+<pre><code>sns.swarmplot(data=tips, x='day', y='total_bill', hue='sex', dodge=True)</code></pre>
+<p>Uses an algorithm to shift points so that <b>no two points overlap</b>. The shape it makes (like a beeswarm) shows the density &mdash; wider part = more values there.</p>
+
+<table>
+<tr><th style="width:120px">Point</th><th>stripplot</th><th>swarmplot</th></tr>
+<tr><td>Point placement</td><td>Random jitter</td><td>Computed, non-overlapping</td></tr>
+<tr><td>Overlap</td><td>Possible</td><td>None</td></tr>
+<tr><td>Speed</td><td>Fast</td><td>Slow (heavy algorithm)</td></tr>
+<tr><td>Big data</td><td>Works fine</td><td>Gives a warning: "points cannot be placed"</td></tr>
+<tr><td>Shows density</td><td>Roughly</td><td>Clearly, by the width of the swarm</td></tr>
+</table>
+
+<div class="box int">
+  <div class="bt">Best practical answer</div>
+  <p>"Both show individual observations for each category. <code>stripplot</code> only adds random jitter so points can still overlap, while <code>swarmplot</code> positions every point so none overlap, which shows density better but is slow on large data. In practice I overlay one of them on a boxplot or violinplot &mdash; the box gives the summary and the points show the actual sample size."</p>
+</div>
+<pre><code>sns.boxplot(data=tips, x='day', y='total_bill', color='lightgrey')
+sns.stripplot(data=tips, x='day', y='total_bill', color='black', size=3, alpha=.5)</code></pre>
+</section>
+
+<!-- ================= 6 ================= -->
+<section>
+<h2 class="sec"><span class="n">6</span>boxplot, violinplot, boxenplot</h2>
+<p class="lead">These compare the <b>distribution</b> of a numerical column across categories.</p>
+
+<h3>boxplot</h3>
+<pre><code>sns.boxplot(data=tips, x='day', y='total_bill',
+            hue='sex',          <span class="c"># side-by-side boxes per category</span>
+            orient='h',         <span class="c"># horizontal</span>
+            showfliers=False,   <span class="c"># hide outlier dots</span>
+            width=0.6, palette='Set2')</code></pre>
+<p>Shows Q1, median, Q3, whiskers at 1.5&times;IQR, and outliers as separate dots. (Full anatomy diagram is in the Matplotlib doc, Topic 9.)</p>
+
+<h3>violinplot</h3>
+<div class="fig">
+<svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif">
+  <!-- box plot -->
+  <text x="110" y="16" font-size="11" font-weight="700" text-anchor="middle" fill="#2b5fae">BOX PLOT</text>
+  <line x1="110" y1="34" x2="110" y2="170" stroke="#39465c" stroke-width="1.5"/>
+  <rect x="88" y="70" width="44" height="60" fill="#eef4ff" stroke="#2b5fae" stroke-width="1.8"/>
+  <line x1="88" y1="104" x2="132" y2="104" stroke="#d62728" stroke-width="2.4"/>
+  <line x1="98" y1="34" x2="122" y2="34" stroke="#39465c" stroke-width="1.8"/>
+  <line x1="98" y1="170" x2="122" y2="170" stroke="#39465c" stroke-width="1.8"/>
+  <text x="110" y="192" font-size="9.5" text-anchor="middle" fill="#5d6678">only summary numbers</text>
+
+  <!-- kde -->
+  <text x="280" y="16" font-size="11" font-weight="700" text-anchor="middle" fill="#1f8a70">KDE (density curve)</text>
+  <path d="M280 34 C 316 60, 322 80, 310 104 C 300 124, 318 146, 280 170" fill="#e6f4f0" stroke="#1f8a70" stroke-width="1.8"/>
+  <line x1="280" y1="34" x2="280" y2="170" stroke="#1f8a70" stroke-dasharray="3 3"/>
+  <text x="280" y="192" font-size="9.5" text-anchor="middle" fill="#5d6678">shape of the distribution</text>
+  <text x="196" y="105" font-size="18" fill="#9aa6b8">+</text>
+  <text x="372" y="105" font-size="18" fill="#9aa6b8">=</text>
+
+  <!-- violin -->
+  <text x="460" y="16" font-size="11" font-weight="700" text-anchor="middle" fill="#6d3fa8">VIOLIN PLOT</text>
+  <path d="M460 34 C 496 60, 502 80, 490 104 C 480 124, 498 146, 460 170
+           C 422 146, 440 124, 430 104 C 418 80, 424 60, 460 34 Z"
+        fill="#f2ecfb" stroke="#6d3fa8" stroke-width="1.8"/>
+  <rect x="454" y="78" width="12" height="52" fill="#39465c"/>
+  <circle cx="460" cy="104" r="3.4" fill="#fff"/>
+  <line x1="460" y1="56" x2="460" y2="152" stroke="#39465c" stroke-width="1.4"/>
+  <text x="460" y="192" font-size="9.5" text-anchor="middle" fill="#5d6678">summary + full shape</text>
+</svg>
+<div class="cap">Figure 6.1 &mdash; A violin plot is a mirrored KDE curve with a mini box plot inside.</div>
+</div>
+
+<pre><code>sns.violinplot(data=tips, x='day', y='total_bill',
+               hue='sex', split=True,     <span class="c"># 2 categories: half violin each - very useful</span>
+               inner='quartile',          <span class="c"># 'box'(default), 'quartile', 'point', 'stick', None</span>
+               bw_adjust=0.8, cut=0)      <span class="c"># cut=0 stops the curve at real data range</span></code></pre>
+
+<table>
+<tr><th style="width:110px">Point</th><th>boxplot</th><th>violinplot</th></tr>
+<tr><td>Shows</td><td>5-number summary + outliers</td><td>Full distribution shape (KDE) + summary inside</td></tr>
+<tr><td>Bimodal data (2 peaks)</td><td><b>Cannot show it</b> &mdash; looks normal</td><td>Shows both peaks clearly</td></tr>
+<tr><td>Outliers</td><td>Marked as dots</td><td>Not marked separately</td></tr>
+<tr><td>Small sample</td><td>Honest</td><td>KDE can invent a smooth shape that is not real</td></tr>
+<tr><td>Audience</td><td>Everyone understands</td><td>Needs some explanation</td></tr>
+</table>
+
+<h3>boxenplot (letter-value plot)</h3>
+<pre><code>sns.boxenplot(data=df, x='class', y='fare')</code></pre>
+<p>Like a boxplot but draws more quantile boxes. Made for <b>large datasets</b>, where it shows the tails far better than a normal boxplot.</p>
+</section>
+
+<!-- ================= 7 ================= -->
+<section>
+<h2 class="sec"><span class="n">7</span>barplot, countplot, pointplot</h2>
+
+<h3>barplot &mdash; shows an AGGREGATE</h3>
+<pre><code>sns.barplot(data=tips, x='day', y='total_bill',
+            estimator='mean',          <span class="c"># default = mean. Can be 'median', 'sum', np.std</span>
+            errorbar=('ci', 95),       <span class="c"># black line on top (old name: ci=95)</span>
+            hue='sex', palette='pastel')</code></pre>
+<div class="box int">
+  <div class="bt">Very common question: what is the black line on the bar?</div>
+  <p>It is the <b>error bar &mdash; the 95% confidence interval of the mean</b>, computed by bootstrapping. A long line means that group has few samples or high variance, so the mean is not reliable. Remove it with <code>errorbar=None</code>.</p>
+</div>
+
+<h3>countplot &mdash; counts rows</h3>
+<pre><code>sns.countplot(data=titanic, x='class', hue='survived')</code></pre>
+<p>Only takes <b>one</b> categorical column and plots its frequency. It is the categorical version of a histogram.</p>
+
+<table>
+<tr><th style="width:110px">Point</th><th>barplot</th><th>countplot</th></tr>
+<tr><td>Inputs</td><td>x (category) <b>and</b> y (numerical)</td><td>only x <b>or</b> y (category)</td></tr>
+<tr><td>Bar height</td><td>Mean (or chosen estimator) of y</td><td>Count of rows</td></tr>
+<tr><td>Equivalent to</td><td><code>df.groupby(x)[y].mean()</code></td><td><code>df[x].value_counts()</code></td></tr>
+<tr><td>Error bar</td><td>Yes (CI)</td><td>No</td></tr>
+</table>
+<p class="nb">So <code>countplot(x='day')</code> is exactly <code>barplot(x='day', y=&lt;count&gt;, estimator='count')</code>. Remember: <b>countplot = barplot with counting built in.</b></p>
+
+<h3>pointplot</h3>
+<pre><code>sns.pointplot(data=tips, x='day', y='total_bill', hue='sex', dodge=True, markers=['o','s'])</code></pre>
+<p>Shows the same mean + CI as a barplot, but as a <b>point joined by a line</b>. The slope of the line makes it easy to see <b>interaction</b> between two categories &mdash; if the lines are not parallel, the effect of one category depends on the other. Preferred over bars when comparing trends across groups.</p>
+
+<h3>catplot &mdash; figure-level wrapper for all of the above</h3>
+<pre><code>sns.catplot(data=tips, x='day', y='total_bill', kind='box',  col='sex', height=4)
+<span class="c"># kind = strip | swarm | box | violin | boxen | bar | count | point</span></code></pre>
+</section>
+
+<!-- ================= 8 ================= -->
+<section>
+<h2 class="sec"><span class="n">8</span>Distribution Plots: histplot, kdeplot, ecdfplot, displot</h2>
+
+<h3>histplot</h3>
+<pre><code>sns.histplot(data=tips, x='total_bill',
+             bins=30,            <span class="c"># or binwidth=5</span>
+             kde=True,           <span class="c"># overlay the smooth KDE curve</span>
+             hue='sex',
+             multiple='stack',   <span class="c"># 'layer'(default) | 'stack' | 'dodge' | 'fill'</span>
+             stat='density',     <span class="c"># 'count'(default) | 'density' | 'probability' | 'percent'</span>
+             element='step')</code></pre>
+<p class="nb">Giving both <code>x</code> and <code>y</code> makes a <b>2D histogram</b> (heatmap of counts) &mdash; good for large scatter data.</p>
+
+<h3>kdeplot &mdash; Kernel Density Estimate</h3>
+<pre><code>sns.kdeplot(data=tips, x='total_bill', hue='sex', fill=True, alpha=.4)
+sns.kdeplot(data=tips, x='total_bill', y='tip')      <span class="c"># 2D contour plot</span>
+sns.kdeplot(data=tips, x='total_bill', bw_adjust=0.5, cut=0)</code></pre>
+<div class="box def">
+  <div class="bt">What is KDE in simple words?</div>
+  <p>It is a <b>smooth histogram</b>. Instead of putting values into bins, it places a small curve (kernel, usually Gaussian) on every data point and adds them all up. The result is a smooth curve whose <b>total area is 1</b>, so the y-axis is density, not count. <code>bw</code> (bandwidth) controls smoothness: small bw = spiky, large bw = over-smooth. It is the "bins" problem in a different form.</p>
+</div>
+
+<h3>ecdfplot &mdash; cumulative</h3>
+<pre><code>sns.ecdfplot(data=tips, x='total_bill', hue='sex')</code></pre>
+<p>For every value it shows what fraction of data is below it. No bins, no smoothing &mdash; so nothing is hidden. Good answer for "how do you compare two distributions without bin bias?"</p>
+
+<h3>rugplot</h3>
+<pre><code>sns.kdeplot(data=tips, x='total_bill')
+sns.rugplot(data=tips, x='total_bill', height=.05)   <span class="c"># small ticks for each observation</span></code></pre>
+
+<h3>displot &mdash; figure-level</h3>
+<pre><code>sns.displot(data=tips, x='total_bill', kind='hist', kde=True, col='sex', height=4)
+<span class="c"># kind = 'hist' (default) | 'kde' | 'ecdf'</span></code></pre>
+
+<div class="box trap">
+  <div class="bt">distplot is removed &mdash; know this</div>
+  <p>Old code used <code>sns.distplot()</code> (histogram + KDE together). It is <b>deprecated and removed in Seaborn 0.14</b>. Replace it with:<br>
+  &bull; <code>sns.histplot(x, kde=True)</code> &mdash; axes-level<br>
+  &bull; <code>sns.displot(x, kde=True)</code> &mdash; figure-level<br>
+  If an interviewer mentions <code>distplot</code>, saying this scores points.</p>
+</div>
+</section>
+
+<!-- ================= 9 ================= -->
+<section>
+<h2 class="sec"><span class="n">9</span>jointplot &amp; JointGrid</h2>
+<p class="lead">A <b>bivariate</b> plot in the centre plus the <b>distribution of each variable</b> on the sides. One chart that answers both "how are they related?" and "how is each one distributed?"</p>
+
+<div class="fig">
+<svg viewBox="0 0 400 210" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif">
+  <rect x="90" y="48" width="180" height="130" fill="#fff" stroke="#39465c" stroke-width="1.4"/>
+  <g fill="#1f8a70" opacity=".75">
+    <circle cx="120" cy="150" r="3.4"/><circle cx="140" cy="135" r="3.4"/><circle cx="155" cy="140" r="3.4"/>
+    <circle cx="165" cy="118" r="3.4"/><circle cx="180" cy="110" r="3.4"/><circle cx="195" cy="120" r="3.4"/>
+    <circle cx="205" cy="95" r="3.4"/><circle cx="220" cy="88" r="3.4"/><circle cx="235" cy="75" r="3.4"/>
+    <circle cx="150" cy="158" r="3.4"/><circle cx="190" cy="132" r="3.4"/><circle cx="248" cy="92" r="3.4"/>
+  </g>
+  <path d="M92 36 C 130 28, 150 10, 180 14 C 215 18, 240 32, 268 38" fill="#e6f4f0" stroke="#1f8a70" stroke-width="1.4"/>
+  <text x="180" y="10" font-size="9" text-anchor="middle" fill="#5d6678">marginal histogram / KDE of X</text>
+  <path d="M282 176 C 300 150, 312 130, 306 110 C 300 86, 288 70, 282 50" fill="#e6f4f0" stroke="#1f8a70" stroke-width="1.4"/>
+  <text x="340" y="115" font-size="9" text-anchor="middle" fill="#5d6678">marginal of Y</text>
+  <text x="180" y="196" font-size="10" text-anchor="middle" fill="#1b2230">joint plot (centre) = scatter / hex / kde / reg</text>
+</svg>
+<div class="cap">Figure 9.1 &mdash; jointplot = joint (centre) + marginal (side) distributions.</div>
+</div>
+
+<pre><code>sns.jointplot(data=tips, x='total_bill', y='tip',
+              kind='scatter',       <span class="c"># 'scatter'|'kde'|'hex'|'reg'|'resid'|'hist'</span>
+              hue='sex',
+              marginal_kws=dict(bins=25, fill=True),
+              height=6, ratio=4)    <span class="c"># ratio = centre size vs side size</span></code></pre>
+<table class="tight">
+<tr><th style="width:80px">kind</th><th>Use when</th></tr>
+<tr><td><code>scatter</code></td><td>Normal size data</td></tr>
+<tr><td><code>hex</code></td><td>Very large data &mdash; hexagon density instead of overlapping dots</td></tr>
+<tr><td><code>kde</code></td><td>Smooth 2D contour, shows density "hills"</td></tr>
+<tr><td><code>reg</code></td><td>Scatter + regression line + marginal histograms</td></tr>
+</table>
+<p class="nb"><b>JointGrid</b> is the manual version &mdash; you decide each part yourself:</p>
+<pre><code>g = sns.JointGrid(data=tips, x='total_bill', y='tip')
+g.plot_joint(sns.scatterplot)
+g.plot_marginals(sns.boxplot)</code></pre>
+<p class="nb"><code>jointplot</code> is figure-level and returns a <code>JointGrid</code>, so <code>ax=</code> is not allowed.</p>
+</section>
+
+<!-- ================= 10 ================= -->
+<section>
+<h2 class="sec"><span class="n">10</span>pairplot &amp; PairGrid</h2>
+<p class="lead">Plots <b>every numerical column against every other</b> &mdash; the fastest way to explore a new dataset.</p>
+
+<pre><code>sns.pairplot(iris,
+             hue='species',         <span class="c"># colour by category - also changes diagonal to KDE</span>
+             diag_kind='kde',       <span class="c"># 'auto' | 'hist' | 'kde' | None</span>
+             kind='scatter',        <span class="c"># 'scatter' | 'kde' | 'hist' | 'reg'</span>
+             vars=['sepal_length','petal_length'],   <span class="c"># only these columns</span>
+             corner=True,           <span class="c"># draw only the lower triangle (no duplicates)</span>
+             height=2.5, palette='Set1')</code></pre>
+
+<h3>How to read it</h3>
+<ul>
+  <li><b>Diagonal</b> = distribution of that single column (histogram or KDE).</li>
+  <li><b>Off-diagonal</b> = scatter plot of the column pair &mdash; shows correlation, clusters and outliers.</li>
+  <li>It is <b>symmetric</b>: upper and lower triangles show the same pairs mirrored, which is why <code>corner=True</code> is useful.</li>
+</ul>
+
+<div class="box trap">
+  <div class="bt">Limitation to mention</div>
+  <p>pairplot plots n&times;n charts. With 20 numerical columns that is 400 small plots &mdash; unreadable and slow. For many columns use a <b>correlation heatmap</b> first, then pairplot only the few interesting columns using <code>vars=</code>.</p>
+</div>
+
+<pre><code>g = sns.PairGrid(iris, hue='species')     <span class="c"># full manual control</span>
+g.map_upper(sns.scatterplot)
+g.map_lower(sns.kdeplot)
+g.map_diag(sns.histplot)
+g.add_legend()</code></pre>
+</section>
+
+<!-- ================= 11 ================= -->
+<section>
+<h2 class="sec"><span class="n">11</span>heatmap &amp; clustermap</h2>
+<p class="lead">Matrix plots. Input must be a <b>2D matrix / pivot table</b>, not raw long data.</p>
+
+<h3>heatmap</h3>
+<pre><code>sns.heatmap(df.corr(numeric_only=True),
+            annot=True,        <span class="c"># write the number in each cell</span>
+            fmt='.2f',         <span class="c"># number format ('d' for integers)</span>
+            cmap='coolwarm',   <span class="c"># diverging, because corr goes -1 to +1</span>
+            vmin=-1, vmax=1, center=0,
+            linewidths=0.5, linecolor='white',
+            cbar=True, square=True,
+            mask=np.triu(np.ones_like(df.corr(), dtype=bool)))  <span class="c"># hide upper triangle</span></code></pre>
+
+<h3>Two main uses</h3>
+<ol>
+  <li><b>Correlation matrix</b> &mdash; <code>sns.heatmap(df.corr(), annot=True)</code>. Find which features relate to the target, and spot multicollinearity.</li>
+  <li><b>Pivot table</b> &mdash; two categories vs one value:
+<pre><code>pt = flights.pivot(index='month', columns='year', values='passengers')
+sns.heatmap(pt, cmap='YlGnBu')</code></pre></li>
+</ol>
+
+<div class="box int">
+  <div class="bt">Interview points that sound professional</div>
+  <ul>
+    <li>Use a <b>diverging</b> cmap (<code>coolwarm</code>, <code>RdBu</code>) for correlation because 0 is a meaningful centre; use a <b>sequential</b> cmap for counts.</li>
+    <li>Always set <code>vmin=-1, vmax=1</code> for correlation so colours are comparable across datasets.</li>
+    <li>Use <code>mask</code> to hide the upper triangle &mdash; a correlation matrix is symmetric, so half of it is duplicate.</li>
+    <li><code>df.corr()</code> gives <b>Pearson</b> (linear) by default. <code>method='spearman'</code> gives rank correlation, which catches non-linear but monotonic relations.</li>
+  </ul>
+</div>
+
+<h3>clustermap</h3>
+<pre><code>sns.clustermap(iris.drop(columns='species'),
+               cmap='viridis',
+               standard_scale=1,     <span class="c"># scale each column 0-1 (1=columns, 0=rows)</span>
+               z_score=0,            <span class="c"># or standardize instead</span>
+               method='average', metric='euclidean',
+               row_cluster=True, col_cluster=True,
+               figsize=(8,8))</code></pre>
+<table class="tight">
+<tr><th style="width:110px">Point</th><th>heatmap</th><th>clustermap</th></tr>
+<tr><td>Row/column order</td><td>As given in the data</td><td><b>Reordered</b> so similar rows/columns sit together</td></tr>
+<tr><td>Extra element</td><td>&mdash;</td><td><b>Dendrogram</b> (tree) on top and left</td></tr>
+<tr><td>Method behind it</td><td>Just colouring</td><td><b>Hierarchical clustering</b></td></tr>
+<tr><td>Level</td><td>Axes-level (<code>ax=</code> works)</td><td>Figure-level (<code>ax=</code> does <b>not</b> work)</td></tr>
+<tr><td>Scaling</td><td>Do it yourself</td><td><code>standard_scale</code> / <code>z_score</code> built in</td></tr>
+</table>
+<p class="nb"><b>Why scaling matters in clustermap:</b> clustering uses distance, so a column measured in thousands would dominate one measured in decimals. That is why you normalize first.</p>
+</section>
+
+<!-- ================= 12 ================= -->
+<section>
+<h2 class="sec"><span class="n">12</span>Regression Plots: regplot, lmplot, residplot</h2>
+<pre><code>sns.regplot(data=tips, x='total_bill', y='tip',
+            ci=95, order=2,          <span class="c"># order=2 -&gt; polynomial fit</span>
+            lowess=True,             <span class="c"># non-parametric smooth curve</span>
+            scatter_kws={'alpha':.4}, line_kws={'color':'red'})
+
+sns.lmplot(data=tips, x='total_bill', y='tip',
+           hue='smoker', col='time', height=4)      <span class="c"># figure-level version</span>
+
+sns.residplot(data=tips, x='total_bill', y='tip')</code></pre>
+<table class="tight">
+<tr><th style="width:95px">Function</th><th>Level</th><th>Notes</th></tr>
+<tr><td><code>regplot</code></td><td>Axes-level</td><td>Scatter + fitted line + CI band. Accepts <code>ax=</code>.</td></tr>
+<tr><td><code>lmplot</code></td><td>Figure-level</td><td>Same chart but supports <code>hue</code>, <code>col</code>, <code>row</code>.</td></tr>
+<tr><td><code>residplot</code></td><td>Axes-level</td><td>Plots the residuals (errors). If a pattern is visible, a linear model is not suitable.</td></tr>
+</table>
+<p class="nb">Interview link to ML: "Residual plot should look like random noise around zero. A curve or funnel shape means the linear assumption or constant-variance assumption is broken."</p>
+</section>
+
+<!-- ================= 13 ================= -->
+<section class="cont">
+<h2 class="sec"><span class="n">13</span>FacetGrid (Multiplots)</h2>
+<p class="lead"><b>Faceting</b> = splitting one chart into many small panels by a category. Also called "small multiples". This is what <code>col</code> and <code>row</code> do internally.</p>
+
+<pre><code>g = sns.FacetGrid(tips, col='time', row='smoker', hue='sex',
+                  height=3.5, aspect=1.2, margin_titles=True)
+g.map(sns.scatterplot, 'total_bill', 'tip')      <span class="c"># or g.map_dataframe(...)</span>
+g.add_legend()
+g.set_axis_labels('Bill', 'Tip')
+g.set_titles(col_template='{col_name}')
+g.fig.suptitle('Tips analysis', y=1.03)</code></pre>
+
+<table class="tight">
+<tr><th style="width:120px">Parameter</th><th>Meaning</th></tr>
+<tr><td><code>col</code> / <code>row</code></td><td>Category that creates columns / rows of panels</td></tr>
+<tr><td><code>col_wrap=3</code></td><td>Wrap panels into new rows after 3 (use only with <code>col</code>, not <code>row</code>)</td></tr>
+<tr><td><code>height</code>, <code>aspect</code></td><td>Height of each panel in inches; width = height &times; aspect</td></tr>
+<tr><td><code>sharex</code> / <code>sharey</code></td><td>Default True &mdash; keeps all panels on the same scale for fair comparison</td></tr>
+<tr><td><code>g.axes</code>, <code>g.fig</code></td><td>Access the underlying Matplotlib objects for customization</td></tr>
+</table>
+<p class="nb">Three Grid classes to remember: <b>FacetGrid</b> (same plot repeated per category), <b>PairGrid</b> (all column pairs), <b>JointGrid</b> (joint + marginals).</p>
+<div class="box int">
+  <div class="bt">Why facet instead of hue?</div>
+  <p>"<code>hue</code> puts everything in one panel, which is better for direct comparison but becomes cluttered with many categories or overlapping points. Faceting gives each category its own clean panel, and since the axes are shared, comparison is still fair."</p>
+</div>
+</section>
+
+<!-- ================= 14 ================= -->
+<section>
+<h2 class="sec"><span class="n">14</span>Styling: theme, style, context, palette</h2>
+
+<h3>One line that sets everything</h3>
+<pre><code>sns.set_theme(style='whitegrid', context='talk', palette='Set2', font_scale=1.1)</code></pre>
+
+<h3>style &mdash; background &amp; grid (5 options)</h3>
+<table class="tight">
+<tr><th style="width:120px">Style</th><th>Look</th></tr>
+<tr><td><code>darkgrid</code></td><td>Default. Grey background + white grid</td></tr>
+<tr><td><code>whitegrid</code></td><td>White background + grey grid &mdash; best for reports</td></tr>
+<tr><td><code>dark</code> / <code>white</code></td><td>No grid</td></tr>
+<tr><td><code>ticks</code></td><td>White + tick marks on the axes &mdash; best for publications</td></tr>
+</table>
+
+<h3>context &mdash; size of fonts, lines, markers (4 options)</h3>
+<p><code>paper</code> &lt; <code>notebook</code> (default) &lt; <code>talk</code> &lt; <code>poster</code>. Use <code>talk</code> or <code>poster</code> for presentation slides.</p>
+<pre><code>sns.set_context('talk', font_scale=1.2)
+sns.despine(left=True)          <span class="c"># remove top &amp; right spines (and left here)</span>
+sns.reset_defaults()            <span class="c"># back to matplotlib defaults</span></code></pre>
+
+<h3>Palettes &mdash; 3 types (same logic as Matplotlib colormaps)</h3>
+<table>
+<tr><th style="width:105px">Type</th><th>Use for</th><th>Examples</th></tr>
+<tr><td><b>Qualitative</b></td><td>Unordered categories</td><td><code>deep</code>, <code>muted</code>, <code>pastel</code>, <code>bright</code>, <code>dark</code>, <code>colorblind</code>, <code>Set1</code>, <code>tab10</code></td></tr>
+<tr><td><b>Sequential</b></td><td>Low &rarr; high values</td><td><code>Blues</code>, <code>rocket</code>, <code>mako</code>, <code>viridis</code>, <code>YlGnBu</code></td></tr>
+<tr><td><b>Diverging</b></td><td>Meaningful midpoint (0)</td><td><code>coolwarm</code>, <code>vlag</code>, <code>icefire</code>, <code>RdBu</code></td></tr>
+</table>
+<pre><code>sns.color_palette('Set2')              <span class="c"># get a palette</span>
+sns.set_palette('pastel')              <span class="c"># set globally</span>
+sns.color_palette('husl', 8)           <span class="c"># 8 evenly spaced distinct colours</span>
+sns.light_palette('seagreen', as_cmap=True)
+sns.palplot(sns.color_palette('deep')) <span class="c"># preview the colours</span></code></pre>
+
+<h3>Size control &mdash; the classic confusion</h3>
+<pre><code><span class="c"># AXES-LEVEL: use matplotlib figsize</span>
+plt.figure(figsize=(10,5))
+sns.boxplot(data=tips, x='day', y='total_bill')
+
+<span class="c"># FIGURE-LEVEL: figsize is IGNORED, use height + aspect</span>
+sns.catplot(data=tips, x='day', y='total_bill', kind='box', height=5, aspect=2)</code></pre>
+</section>
+
+<!-- ================= 15 ================= -->
+<section>
+<h2 class="sec"><span class="n">15</span>Which Plot When &mdash; Master Table</h2>
+<table>
+<tr><th style="width:150px">Data situation</th><th>Plot</th><th>Function</th></tr>
+<tr><td>1 numerical</td><td>Distribution</td><td><code>histplot</code>, <code>kdeplot</code>, <code>ecdfplot</code>, <code>boxplot</code></td></tr>
+<tr><td>1 categorical</td><td>Frequency</td><td><code>countplot</code></td></tr>
+<tr><td>2 numerical</td><td>Relationship</td><td><code>scatterplot</code>, <code>regplot</code>, <code>jointplot</code></td></tr>
+<tr><td>2 numerical + time order</td><td>Trend</td><td><code>lineplot</code></td></tr>
+<tr><td>1 cat + 1 num (summary)</td><td>Compare averages</td><td><code>barplot</code>, <code>pointplot</code></td></tr>
+<tr><td>1 cat + 1 num (spread)</td><td>Compare distributions</td><td><code>boxplot</code>, <code>violinplot</code>, <code>boxenplot</code></td></tr>
+<tr><td>1 cat + 1 num (all points)</td><td>Show every observation</td><td><code>stripplot</code>, <code>swarmplot</code></td></tr>
+<tr><td>2 categorical</td><td>Cross counts</td><td><code>countplot(hue=)</code>, <code>heatmap(crosstab)</code></td></tr>
+<tr><td>Many numerical</td><td>All relations at once</td><td><code>pairplot</code>, <code>heatmap(df.corr())</code></td></tr>
+<tr><td>Matrix / pivot table</td><td>Colour grid</td><td><code>heatmap</code>, <code>clustermap</code></td></tr>
+<tr><td>Add a category to any plot</td><td>Split</td><td><code>hue</code>, or <code>col</code>/<code>row</code> faceting</td></tr>
+</table>
+
+<div class="box int">
+  <div class="bt">EDA order that interviewers like to hear</div>
+  <p>"First univariate &mdash; <code>histplot</code> for numerical columns and <code>countplot</code> for categorical ones. Then bivariate &mdash; <code>scatterplot</code> for numerical pairs, <code>boxplot</code> for category vs numerical, and a correlation <code>heatmap</code> for the whole table. Then multivariate &mdash; add <code>hue</code> or facet with <code>col</code>, and <code>pairplot</code> on the important columns."</p>
+</div>
+</section>
+
+<!-- ================= 16 ================= -->
+<section>
+<h2 class="sec"><span class="n">16</span>Common Errors &amp; Gotchas</h2>
+<table>
+<tr><th style="width:250px">Problem</th><th>Reason &amp; fix</th></tr>
+<tr><td><code>figsize</code> has no effect</td><td>You used a figure-level function. Use <code>height</code> + <code>aspect</code>.</td></tr>
+<tr><td><code>TypeError: got an unexpected keyword argument 'ax'</code></td><td>Figure-level functions do not accept <code>ax=</code>. Use the axes-level version (<code>histplot</code> instead of <code>displot</code>).</td></tr>
+<tr><td>Seaborn plot is empty inside <code>plt.subplots()</code></td><td>Pass <code>ax=ax[0,0]</code> to the Seaborn function.</td></tr>
+<tr><td>swarmplot warning: "x% of points cannot be placed"</td><td>Too many points for the space. Increase figure width, reduce <code>size=</code>, or use <code>stripplot</code>.</td></tr>
+<tr><td><code>distplot</code> not found</td><td>Removed in new versions. Use <code>histplot(kde=True)</code> or <code>displot</code>.</td></tr>
+<tr><td><code>FutureWarning: ci is deprecated</code></td><td>New name is <code>errorbar=('ci',95)</code> or <code>errorbar=None</code>.</td></tr>
+<tr><td>Palette warning when using <code>palette</code> without <code>hue</code></td><td>Newer Seaborn wants <code>hue=x, legend=False</code> when colouring by the x category.</td></tr>
+<tr><td>heatmap shows nothing / error on strings</td><td><code>df.corr(numeric_only=True)</code> &mdash; text columns must be excluded.</td></tr>
+<tr><td>Heatmap labels cut off</td><td><code>plt.tight_layout()</code> or <code>plt.yticks(rotation=0)</code>.</td></tr>
+<tr><td><code>hue</code> does not work on my data</td><td>Data is in wide format. Convert with <code>df.melt()</code> to long format first.</td></tr>
+<tr><td>Seaborn style changed my Matplotlib charts</td><td><code>sns.set_theme()</code> changes global rcParams. Reset with <code>sns.reset_defaults()</code>.</td></tr>
+</table>
+</section>
+
+<!-- ================= 17 ================= -->
+<section>
+<h2 class="sec"><span class="n">17</span>Cheat Sheet</h2>
+<div class="sheet">
+<div class="two">
+<div>
+<h4>Setup</h4>
+<pre><code>import seaborn as sns
+import matplotlib.pyplot as plt
+sns.set_theme(style='whitegrid')
+tips = sns.load_dataset('tips')</code></pre>
+<h4>Relational</h4>
+<pre><code>sns.scatterplot(data=d,x=,y=,hue=,size=,style=)
+sns.lineplot(data=d,x=,y=,hue=,errorbar=None)
+sns.relplot(..., kind='line', col=, row=)</code></pre>
+<h4>Categorical</h4>
+<pre><code>sns.stripplot(x=,y=,jitter=.25,dodge=True)
+sns.swarmplot(x=,y=)        # no overlap, slow
+sns.boxplot(x=,y=,hue=,showfliers=False)
+sns.violinplot(x=,y=,hue=,split=True,inner='quartile')
+sns.boxenplot(x=,y=)        # large data
+sns.barplot(x=,y=,estimator='mean',errorbar=('ci',95))
+sns.countplot(x=)           # value_counts
+sns.pointplot(x=,y=,hue=,dodge=True)
+sns.catplot(..., kind='box', col=)</code></pre>
+<h4>Distribution</h4>
+<pre><code>sns.histplot(x=,bins=30,kde=True,
+             multiple='stack',stat='density')
+sns.kdeplot(x=,hue=,fill=True,bw_adjust=.5)
+sns.ecdfplot(x=)
+sns.rugplot(x=)
+sns.displot(x=, kind='kde', col=)</code></pre>
+</div>
+<div>
+<h4>Matrix</h4>
+<pre><code>sns.heatmap(df.corr(numeric_only=True),
+   annot=True, fmt='.2f', cmap='coolwarm',
+   vmin=-1, vmax=1, linewidths=.5, mask=m)
+sns.clustermap(df, standard_scale=1,
+   cmap='viridis')   # + dendrogram</code></pre>
+<h4>Grids</h4>
+<pre><code>sns.jointplot(x=,y=,kind='hex'|'kde'|'reg')
+sns.pairplot(df,hue=,corner=True,diag_kind='kde')
+g = sns.FacetGrid(df,col=,row=,hue=)
+g.map(sns.scatterplot,'x','y'); g.add_legend()</code></pre>
+<h4>Regression</h4>
+<pre><code>sns.regplot(x=,y=,order=2,lowess=True)
+sns.lmplot(x=,y=,hue=,col=)
+sns.residplot(x=,y=)</code></pre>
+<h4>Style</h4>
+<pre><code>sns.set_theme(style=,context=,palette=)
+style: darkgrid|whitegrid|dark|white|ticks
+context: paper|notebook|talk|poster
+sns.despine(); sns.set_palette('Set2')
+sns.color_palette('husl', 8)</code></pre>
+<h4>Figure vs Axes level</h4>
+<pre><code>FIGURE: relplot displot catplot
+        lmplot jointplot pairplot
+        -&gt; FacetGrid, height+aspect, col/row
+AXES  : scatter/line/hist/kde/box/violin/
+        bar/count/strip/swarm/heatmap/regplot
+        -&gt; Axes, ax=, figsize</code></pre>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ================= 18 ================= -->
+<section>
+<h2 class="sec"><span class="n">18</span>Real Interview Questions &amp; Answers</h2>
+<p class="lead">Short, speakable answers &mdash; the way you can actually say them in the interview.</p>
+
+<h3>A. Basics</h3>
+
+<div class="qa"><p class="q">1. What is Seaborn and how is it different from Matplotlib?</p>
+<p class="a">Seaborn is a statistical visualization library built on top of Matplotlib. The difference is that Seaborn works directly with DataFrames and does the statistics itself &mdash; mean, confidence interval, KDE, regression &mdash; and gives complex plots in one line. Matplotlib is lower level and only draws exactly what I give it. I use Seaborn for the chart and Matplotlib to fine-tune it.</p></div>
+
+<div class="qa"><p class="q">2. Is Seaborn a replacement for Matplotlib?</p>
+<p class="a">No. Seaborn is a wrapper over Matplotlib. Every axes-level Seaborn function returns a Matplotlib Axes, so both are used together.</p></div>
+
+<div class="qa"><p class="q">3. What is figure-level and axes-level in Seaborn?</p>
+<p class="a">Axes-level functions like <code>scatterplot</code>, <code>boxplot</code>, <code>histplot</code> draw on one Matplotlib Axes and accept <code>ax=</code>, so they work inside my own subplot grid. Figure-level functions like <code>relplot</code>, <code>displot</code>, <code>catplot</code> create their own figure, return a FacetGrid and support <code>col</code> and <code>row</code> to split data into panels. Figure-level does not accept <code>ax=</code>, and its size is set with <code>height</code> and <code>aspect</code>, not <code>figsize</code>.</p></div>
+
+<div class="qa"><p class="q">4. Name the three main figure-level functions and what they wrap.</p>
+<p class="a"><code>relplot</code> wraps scatterplot and lineplot. <code>displot</code> wraps histplot, kdeplot and ecdfplot. <code>catplot</code> wraps all categorical plots &mdash; strip, swarm, box, violin, boxen, bar, count, point. You choose with <code>kind=</code>.</p></div>
+
+<div class="qa"><p class="q">5. What is long (tidy) format and why does Seaborn need it?</p>
+<p class="a">Long format means one row is one observation and each variable has its own column. Seaborn needs it because <code>hue</code>, <code>col</code> and <code>row</code> take a column name &mdash; if a variable is hidden inside column headers (wide format), Seaborn cannot use it. I convert with <code>df.melt()</code>.</p></div>
+
+<div class="qa"><p class="q">6. What does hue do?</p>
+<p class="a"><code>hue</code> splits the plot by a categorical column and gives each group a different colour, with an automatic legend. In Matplotlib I would have to do a groupby and loop manually.</p></div>
+
+<h3>B. Plot comparisons (asked most)</h3>
+
+<div class="qa"><p class="q">7. stripplot vs swarmplot?</p>
+<p class="a">Both show every individual point for each category. <code>stripplot</code> only adds random jitter, so points can still overlap. <code>swarmplot</code> calculates positions so that no points overlap, which shows density better but is slow and warns on large data. For big datasets I use stripplot with low alpha.</p></div>
+
+<div class="qa"><p class="q">8. boxplot vs violinplot?</p>
+<p class="a">Boxplot shows the five-number summary and outliers. Violin plot shows the full distribution shape using a mirrored KDE, with a small box inside. The big difference is that a boxplot cannot show a bimodal distribution &mdash; two peaks look like one normal group &mdash; while the violin shows both peaks. But on small samples the violin's KDE can create a smooth shape that is not really there.</p></div>
+
+<div class="qa"><p class="q">9. barplot vs countplot?</p>
+<p class="a"><code>barplot</code> needs a category and a numerical column, and the bar height is the mean of that numerical column &mdash; same as a groupby mean. <code>countplot</code> needs only one categorical column and the bar height is the number of rows &mdash; same as <code>value_counts()</code>. So countplot is just barplot with counting built in.</p></div>
+
+<div class="qa"><p class="q">10. What is the black vertical line on top of a barplot?</p>
+<p class="a">It is the error bar &mdash; by default the 95% confidence interval of the mean, computed by bootstrapping. A long line means that group has few samples or high variance. I remove it with <code>errorbar=None</code>.</p></div>
+
+<div class="qa"><p class="q">11. Histogram vs KDE plot?</p>
+<p class="a">A histogram puts values into bins and counts them, so the shape depends on the bin size. A KDE places a small smooth curve on each point and adds them up, giving a smooth density curve whose area is 1. KDE is easier to read and better for comparing groups, but its smoothness depends on bandwidth, and it can show values that do not exist in the data, for example negative values for an always-positive column.</p></div>
+
+<div class="qa"><p class="q">12. What is heatmap vs clustermap?</p>
+<p class="a">Heatmap colours a matrix in the given row and column order. Clustermap first performs hierarchical clustering, reorders rows and columns so similar ones come together, and draws dendrograms on the side. Clustermap is figure-level and has built-in scaling options.</p></div>
+
+<div class="qa"><p class="q">13. What is a pairplot and when is it not useful?</p>
+<p class="a">pairplot draws every numerical column against every other, with distributions on the diagonal. It is great for a quick look at a small dataset. With many columns it becomes n&times;n tiny plots, which is slow and unreadable &mdash; then I use a correlation heatmap first and pairplot only the selected columns through <code>vars=</code>.</p></div>
+
+<div class="qa"><p class="q">14. What does jointplot show?</p>
+<p class="a">The relationship between two numerical columns in the centre, plus the individual distribution of each column on the top and right margins. <code>kind</code> can be scatter, hex, kde or reg &mdash; I use hex for very large data because dots would overlap.</p></div>
+
+<div class="qa"><p class="q">15. How do you check correlation between all features?</p>
+<p class="a"><code>sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='coolwarm', vmin=-1, vmax=1)</code>. I use a diverging colormap because zero is a meaningful centre, and I mask the upper triangle because the matrix is symmetric. By default it is Pearson correlation, which catches only linear relations; Spearman is used for monotonic non-linear ones.</p></div>
+
+<h3>C. Practical / code</h3>
+
+<div class="qa"><p class="q">16. figsize is not working on my seaborn plot. Why?</p>
+<p class="a">Because it is a figure-level function &mdash; it creates its own figure, so the earlier <code>plt.figure(figsize=...)</code> is ignored. I use <code>height</code> and <code>aspect</code>, where width = height &times; aspect.</p></div>
+
+<div class="qa"><p class="q">17. How do you put seaborn plots inside subplots?</p>
+<p class="a">Create the grid with <code>fig, ax = plt.subplots(2,2)</code> and pass <code>ax=ax[0,0]</code> to <b>axes-level</b> functions. Figure-level functions cannot be put inside subplots.</p></div>
+
+<div class="qa"><p class="q">18. How do you change the title or labels of a seaborn plot?</p>
+<p class="a">For axes-level, the function returns an Axes, so <code>ax = sns.boxplot(...)</code> then <code>ax.set_title()</code>, or simply <code>plt.title()</code>. For figure-level, it returns a grid object, so <code>g.set_axis_labels('x','y')</code>, <code>g.set_titles()</code>, and <code>g.fig.suptitle()</code>.</p></div>
+
+<div class="qa"><p class="q">19. What is faceting? How is it different from hue?</p>
+<p class="a">Faceting splits data into separate small panels by a category, using <code>col</code> and <code>row</code>. <code>hue</code> keeps everything in one panel with different colours. hue is better for direct comparison; faceting is better when there are many categories or heavy overlap. Facet axes are shared by default, so comparison stays fair.</p></div>
+
+<div class="qa"><p class="q">20. Difference between FacetGrid, PairGrid and JointGrid?</p>
+<p class="a">FacetGrid repeats the same plot for each category. PairGrid plots every pair of columns in a matrix. JointGrid shows one bivariate plot with marginal distributions. <code>catplot</code>/<code>relplot</code>/<code>displot</code> are the ready-made versions of FacetGrid, <code>pairplot</code> of PairGrid, and <code>jointplot</code> of JointGrid.</p></div>
+
+<div class="qa"><p class="q">21. What are the different seaborn styles and contexts?</p>
+<p class="a">Five styles &mdash; darkgrid, whitegrid, dark, white, ticks &mdash; which control the background and grid. Four contexts &mdash; paper, notebook, talk, poster &mdash; which scale fonts, lines and markers. <code>sns.set_theme()</code> sets both at once.</p></div>
+
+<div class="qa"><p class="q">22. What types of palettes are there and when do you use each?</p>
+<p class="a">Qualitative for unordered categories like <code>Set2</code> or <code>deep</code>. Sequential for low-to-high values like <code>Blues</code> or <code>rocket</code>. Diverging when there is a meaningful centre, like a correlation matrix, for example <code>coolwarm</code> or <code>vlag</code>. For accessibility I use the <code>colorblind</code> palette.</p></div>
+
+<div class="qa"><p class="q">23. What happened to distplot?</p>
+<p class="a">It is deprecated and removed in recent versions. Its replacements are <code>histplot</code> for the axes-level histogram with optional KDE, <code>kdeplot</code> for density only, and <code>displot</code> as the figure-level version.</p></div>
+
+<div class="qa"><p class="q">24. What does sns.despine() do?</p>
+<p class="a">It removes the top and right border lines (spines) of the plot, which makes the chart look cleaner. In plain Matplotlib I would write <code>ax.spines['top'].set_visible(False)</code> for each one.</p></div>
+
+<div class="qa"><p class="q">25. How do you handle a swarmplot warning on large data?</p>
+<p class="a">The warning means points could not be placed without overlapping. I either increase the figure width, reduce the marker size, sample the data, or switch to stripplot or a violinplot which handle large data better.</p></div>
+
+<div class="qa"><p class="q">26. Your scatterplot has 1 lakh points and looks like a blob. What do you do?</p>
+<p class="a">That is overplotting. I lower <code>alpha</code>, or use <code>jointplot(kind='hex')</code>, or a 2D <code>kdeplot</code>, or <code>histplot</code> with both x and y which makes a 2D histogram. Sampling the rows is also an option.</p></div>
+
+<div class="qa"><p class="q">27. How do you show the distribution of a numerical column for each category?</p>
+<p class="a">Three ways depending on the need: <code>boxplot</code> for a compact summary with outliers, <code>violinplot</code> for the full shape, and <code>histplot</code> or <code>kdeplot</code> with <code>hue</code> for overlapping curves. If there are many categories I facet with <code>displot(col='category')</code>.</p></div>
+
+<div class="qa"><p class="q">28. In EDA, which seaborn plots do you use and in what order?</p>
+<p class="a">First univariate &mdash; histplot for numerical columns, countplot for categorical ones, boxplot to find outliers. Then bivariate &mdash; scatterplot for two numerical, boxplot or barplot for category vs numerical, and a correlation heatmap. Then multivariate &mdash; add hue, facet with col, and pairplot on the important columns.</p></div>
+
+<div class="qa"><p class="q">29. How does Seaborn help in feature selection for a machine learning model?</p>
+<p class="a">A correlation heatmap shows which features relate to the target and which features are highly correlated with each other, which signals multicollinearity. Boxplots of a feature grouped by the target class show whether that feature separates the classes. pairplot with <code>hue=target</code> shows if classes form separate clusters.</p></div>
+
+<div class="qa"><p class="q">30. Can you use Matplotlib code on a Seaborn plot?</p>
+<p class="a">Yes, that is the normal workflow. Axes-level functions return a Matplotlib Axes, so <code>plt.title()</code>, <code>plt.xticks(rotation=45)</code>, <code>ax.set_ylim()</code> and <code>plt.savefig()</code> all work. For figure-level plots I access <code>g.fig</code> and <code>g.axes</code> to do the same.</p></div>
+
+<div class="box int" style="margin-top:18px">
+  <div class="bt">Final tip</div>
+  <p>Whenever you name a Seaborn function in an interview, add one line on <b>why that plot for that data type</b> and whether it is <b>figure-level or axes-level</b>. Those two habits make you sound like someone who has actually used the library.</p>
+</div>
+</section>
+
+</body>
+</html>
