@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>CatBoost and LightGBM - Revision Guide</title>
+<link rel="stylesheet" href="katex/katex.min.css">
+<link rel="stylesheet" href="tex.css">
+</head><body>
+
+<h1 class="doc">CatBoost &amp; LightGBM &mdash; Revision Guide</h1>
+<p class="sub">Theory, Derivations, Worked Examples and a Full Comparison with XGBoost</p>
+<p class="date">Written in the same style as the XGBoost notes &mdash; for quick revision just before an interview</p>
+
+<div class="nbox"><div class="tt">How to read this</div>
+<p>Part 1 is <b>CatBoost</b>, Part 2 is <b>LightGBM</b>, Part 3 is the <b>comparison of XGBoost, LightGBM and CatBoost</b>. Each part starts with a box of <b>all formulas</b>, then theory, then the <b>derivation</b>, then a small <b>numeric example</b>, and ends with a <b>mind map</b>. If you have only 20 minutes: read the formula boxes, the green <i>Key Insight</i> boxes, and Part 3.</p></div>
+
+<h2><span class="nm">0</span>Contents</h2>
+<div class="toc">
+<div class="t1">Part 1 &mdash; CatBoost</div>
+<div class="t2">1. Summary of All Formulas</div>
+<div class="t2">2. What is CatBoost? &nbsp;&middot;&nbsp; 3. Core Concepts</div>
+<div class="t2">4. Problem 1: Categorical Features (full derivation of Ordered Target Statistics)</div>
+<div class="t2">5. Problem 2: Prediction Shift (derivation of Ordered Boosting)</div>
+<div class="t2">6. Oblivious (Symmetric) Trees &nbsp;&middot;&nbsp; 7. Worked Numeric Example</div>
+<div class="t2">8. Classification &nbsp;&middot;&nbsp; 9. Important Notes &nbsp;&middot;&nbsp; 10. Mind Map</div>
+<div class="t1">Part 2 &mdash; LightGBM</div>
+<div class="t2">1. Summary of All Formulas</div>
+<div class="t2">2. What is LightGBM? &nbsp;&middot;&nbsp; 3. Core Concepts</div>
+<div class="t2">4. Histogram-based Split Finding (derivation + subtraction trick)</div>
+<div class="t2">5. GOSS &mdash; Gradient-based One-Side Sampling (full derivation)</div>
+<div class="t2">6. EFB &mdash; Exclusive Feature Bundling (derivation)</div>
+<div class="t2">7. Leaf-wise Growth &nbsp;&middot;&nbsp; 8. Categorical Features &nbsp;&middot;&nbsp; 9. Worked Example</div>
+<div class="t2">10. Important Notes &nbsp;&middot;&nbsp; 11. Mind Map</div>
+<div class="t1">Part 3 &mdash; Comparison</div>
+<div class="t2">1. Master Table &nbsp;&middot;&nbsp; 2. Tree Growth &nbsp;&middot;&nbsp; 3. Split Finding &nbsp;&middot;&nbsp; 4. Categorical Handling</div>
+<div class="t2">5. Speed, Memory, Accuracy &nbsp;&middot;&nbsp; 6. Which One to Use &nbsp;&middot;&nbsp; 7. Hyperparameter Mapping</div>
+<div class="t2">8. Interview Questions &amp; Answers &nbsp;&middot;&nbsp; 9. Final Mind Map</div>
+</div>
+
+<div class="kbox"><div class="tt">One line before you start</div>
+<p>All three are <b>Gradient Boosting on Decision Trees (GBDT)</b>. The maths of boosting is the same in all three. They differ only in <b>three things</b>: (1) how a tree finds the best split, (2) how the tree grows, and (3) what extra problem they fix &mdash; LightGBM fixes <b>speed</b>, CatBoost fixes <b>categorical features and target leakage</b>.</p></div>
+
+<!-- =================== PART 1 =================== -->
+<div class="part">
+  <div class="pk">Part 1</div>
+  <h1>CatBoost</h1>
+  <p>Categorical Boosting &mdash; Yandex, 2017</p>
+</div>
+
+<h2><span class="nm">1</span>Summary of All Formulas</h2>
+
+<div class="fbox"><div class="tt">A. Handling Categorical Features</div><div class="bd">
+<p><b>Greedy Target Statistic (plain mean / target encoding):</b></p>
+$$\hat{x}^k_i=\frac{\sum_{j=1}^{n}\mathbb{1}\{x^k_j=x^k_i\}\cdot y_j+a\,P}{\sum_{j=1}^{n}\mathbb{1}\{x^k_j=x^k_i\}+a}$$
+<p><b>Ordered Target Statistic (what CatBoost actually uses):</b></p>
+$$\hat{x}^k_i=\frac{\sum_{x_j\in\mathcal{D}_i}\mathbb{1}\{x^k_j=x^k_i\}\cdot y_j+a\,P}{\sum_{x_j\in\mathcal{D}_i}\mathbb{1}\{x^k_j=x^k_i\}+a},
+\qquad \mathcal{D}_i=\{x_j:\sigma(j)\lt\sigma(i)\}$$
+<p class="small">\(\sigma\) = a random permutation (the artificial "time"), \(\mathcal{D}_i\) = only the rows that come <b>before</b> row \(i\), \(P\) = prior (usually the mean of \(y\) over the whole training set), \(a\gt 0\) = smoothing weight.</p>
+</div></div>
+
+<div class="fbox"><div class="tt">B. Ordered Boosting</div><div class="bd">
+<p><b>Ordinary gradient boosting (biased):</b></p>
+$$g_i=-\left.\frac{\partial L(y_i,s)}{\partial s}\right|_{s=F^{t-1}(x_i)}\qquad\text{(}F^{t-1}\text{ has already seen } y_i\text{)}$$
+<p><b>Ordered boosting (unbiased):</b></p>
+$$g_i=-\left.\frac{\partial L(y_i,s)}{\partial s}\right|_{s=M_{\sigma(i)-1}(x_i)}$$
+<p class="small">\(M_{\sigma(i)-1}\) is a supporting model trained <b>only on the rows before \(i\)</b>, so it has never seen \(y_i\).</p>
+</div></div>
+
+<div class="fbox"><div class="tt">C. Tree and Model (same as gradient boosting)</div><div class="bd">
+<p><b>Leaf value (Newton step):</b></p>
+$$w_j=-\frac{\sum_{i\in I_j}g_i}{\sum_{i\in I_j}h_i+\lambda}=-\frac{G_j}{H_j+\lambda}$$
+<p><b>Split gain:</b></p>
+$$\text{Gain}=\frac{1}{2}\left[\frac{G_L^2}{H_L+\lambda}+\frac{G_R^2}{H_R+\lambda}-\frac{G_P^2}{H_P+\lambda}\right]$$
+<p><b>Oblivious tree leaf index (all splits of one level are the same):</b></p>
+$$\text{leaf}(x)=\sum_{d=0}^{D-1}2^{\,d}\cdot\mathbb{1}\{x^{f_d}\gt t_d\}$$
+<p><b>Model update:</b></p>
+$$F_m(x)=F_{m-1}(x)+\eta\cdot T_m(x)$$
+</div></div>
+
+<h2><span class="nm">2</span>What is CatBoost?</h2>
+<p>CatBoost = <b>Cat</b>egorical + <b>Boost</b>ing. It is gradient boosting on decision trees, made by Yandex in 2017. The boosting part is nothing new &mdash; the new part is that it solves two problems that every other GBDT library had:</p>
+<ol>
+<li><b>Categorical features.</b> Normal libraries need you to encode city, product-id, user-id yourself. One-hot blows up the memory, and mean (target) encoding <b>leaks the target</b>. CatBoost does the encoding inside the model, in a leak-free way.</li>
+<li><b>Prediction shift (a hidden kind of leakage in boosting itself).</b> In normal boosting, the residual of a row is calculated using a model that was trained on that same row. So the residuals are slightly "too good" on train and the model is biased. CatBoost fixes this with <b>ordered boosting</b>.</li>
+</ol>
+<div class="kbox"><div class="tt">The one-line answer</div>
+<p>"CatBoost is gradient boosting that handles categorical features internally using <b>ordered target statistics</b>, removes the bias of boosting using <b>ordered boosting</b>, and builds <b>symmetric (oblivious) trees</b> which make prediction extremely fast."</p></div>
+
+<h3><span class="nm">2.1</span>The Big Picture</h3>
+<p>The workflow is the same five steps as any boosting model:</p>
+<ol>
+<li>Start with a base model (mean of \(y\), or log-odds for classification).</li>
+<li>Calculate the errors (gradients / residuals) &mdash; <b>but using ordered boosting</b>.</li>
+<li>Build a decision tree on those errors &mdash; <b>but the tree is symmetric</b>.</li>
+<li>Add the tree to the model after multiplying by the learning rate \(\eta\).</li>
+<li>Repeat.</li>
+</ol>
+<div class="nbox"><div class="tt">The major twist</div>
+<p>In XGBoost the twist was the <b>Similarity Score</b>. In CatBoost the twist is in two other places: <b>how the categorical columns become numbers</b> (ordered target statistics), and <b>which model is used to compute the residual</b> (ordered boosting).</p></div>
+
+<h2><span class="nm">3</span>Core Concepts</h2>
+<div class="rbox"><div class="tt">1. Target Statistic (TS)</div>
+<p>Replacing a category (like "Delhi") by a number calculated from the target \(y\) of the rows having that category. Also called target encoding or mean encoding.</p></div>
+<div class="rbox"><div class="tt">2. Target Leakage</div>
+<p>When the value of \(y_i\) of the <b>same row</b> is used to build the feature of that row. The model then looks great on training data and fails on test data.</p></div>
+<div class="rbox"><div class="tt">3. Ordered Principle</div>
+<p>Pretend the dataset arrived one row at a time (a random permutation \(\sigma\) is the fake "time"). To calculate anything for row \(i\), use <b>only the rows that came before it</b>. This single idea is used twice in CatBoost: for the encoding (ordered TS) and for the residuals (ordered boosting).</p></div>
+<div class="rbox"><div class="tt">4. Oblivious (Symmetric) Tree</div>
+<p>A tree where <b>every node at the same depth uses the same feature and the same threshold</b>. So a tree of depth 6 has only 6 split decisions and \(2^6=64\) leaves.</p></div>
+<div class="rbox"><div class="tt">5. Feature Combinations</div>
+<p>CatBoost automatically creates new categorical features by joining existing ones, e.g. <code>city &times; device</code>, and encodes the combination as one category. This captures interaction without you writing it.</p></div>
+<div class="rbox"><div class="tt">6. Learning Rate and Regularisation</div>
+<p>\(\eta\) (learning rate, default about 0.03&ndash;0.1) and \(\lambda\) (<code>l2_leaf_reg</code>, default 3) work exactly like in XGBoost.</p></div>
+
+<h2><span class="nm">4</span>Problem 1: Categorical Features</h2>
+
+<h3><span class="nm">4.1</span>Why the Usual Methods Fail</h3>
+<table class="grid">
+<tr><th style="width:120px">Method</th><th>What it does</th><th>Why it fails</th></tr>
+<tr><td>One-Hot Encoding</td><td>One new 0/1 column per category</td><td>A user-id column with 1 lakh categories creates 1 lakh columns. Memory blows up and every split becomes very weak.</td></tr>
+<tr><td>Label Encoding</td><td>Delhi=1, Mumbai=2, Pune=3</td><td>Creates a <b>fake order</b>. The tree will think Pune &gt; Mumbai &gt; Delhi, which has no meaning.</td></tr>
+<tr><td>Target (Mean) Encoding</td><td>Replace the category by the mean \(y\) of that category</td><td>Very powerful, but it <b>leaks the target</b> &mdash; explained below.</td></tr>
+</table>
+
+<h3><span class="nm">4.2</span>Target Statistic with Smoothing</h3>
+<p>The basic idea of target encoding is simple: a category is useful if the target behaves differently inside it. So replace the category by its average target:</p>
+$$\hat{x}^k_i=\frac{\sum_{j=1}^{n}\mathbb{1}\{x^k_j=x^k_i\}\cdot y_j}{\sum_{j=1}^{n}\mathbb{1}\{x^k_j=x^k_i\}}=\frac{\text{sum of }y\text{ in that category}}{\text{count of that category}}$$
+<p>Problem: if a category appears only twice, this average is pure noise. So we pull it towards a <b>prior</b> \(P\) (the global mean of \(y\)) with a weight \(a\):</p>
+<div class="rbox"><div class="tt">Formula / Result: Smoothed Target Statistic</div>
+$$\hat{x}^k_i=\frac{\sum_{j}\mathbb{1}\{x^k_j=x^k_i\}\cdot y_j+a\,P}{\sum_{j}\mathbb{1}\{x^k_j=x^k_i\}+a}$$
+<p class="small">Read it as: <b>(sum of y in the category + a &times; prior) / (count + a)</b>. If the count is large, \(a\,P\) hardly matters and we get the real mean. If the count is 1 or 2, the value stays close to the prior. This is the same idea as Laplace smoothing.</p></div>
+
+<h3><span class="nm">4.3</span>Derivation: Why Plain Target Encoding Leaks</h3>
+<p class="step">Step 1: Take the worst case.</p>
+<p>Suppose a categorical feature where <b>every row has its own unique category</b> (like an order-id). Take \(a=0\) for a moment. For row \(i\), the only row having that category is row \(i\) itself. So the formula gives:</p>
+$$\hat{x}^k_i=\frac{1\cdot y_i}{1}=y_i$$
+<p class="step">Step 2: See what the tree does with it.</p>
+<p>The feature is now exactly the target. Suppose the target is 0/1. A single split at threshold \(t=0.5\) separates the data <b>perfectly</b>:</p>
+$$\hat{x}^k_i\lt 0.5 \Rightarrow y_i=0,\qquad \hat{x}^k_i\gt 0.5\Rightarrow y_i=1$$
+<p class="step">Step 3: See what happens on test data.</p>
+<p>A new row has a category that was never seen. Its encoded value becomes the prior \(P\) for everyone. So every test row goes to the same side of the split and the accuracy drops to the base rate.</p>
+<div class="kbox"><div class="tt">Key Insight</div>
+<p>Training error \(\to 0\), test error \(\to\) random. The feature carried the answer inside it. This is <b>target leakage</b>. Formally, the problem is that \(\hat{x}_i\) is computed using \(y_i\), so
+\(\;\mathbb{E}[\hat{x}^k\mid y]\) is different on train and on test. CatBoost calls this a violation of the property \(P1\): <i>the expected value of the encoding must be the same for training and test examples</i>.</p></div>
+
+<h3><span class="nm">4.4</span>Attempt 1: Holdout TS</h3>
+<p>Split the data into two parts: use part \(\mathcal{D}_0\) to compute the encoding and part \(\mathcal{D}_1\) to train. No leakage, because \(y_i\) of a training row is never used in its own encoding.</p>
+<p><b>Why it is rejected:</b> you lose data twice &mdash; the encoding is computed on fewer rows (noisy), and the model trains on fewer rows (weaker). It breaks a second property \(P2\): <i>use all the data effectively</i>.</p>
+
+<h3><span class="nm">4.5</span>Attempt 2: Leave-One-Out TS (and why it <i>also</i> leaks)</h3>
+<p>Natural idea: for row \(i\), use all rows <b>except row \(i\)</b>:</p>
+$$\hat{x}^k_i=\frac{\sum_{j\neq i}\mathbb{1}\{x^k_j=x^k_i\}\cdot y_j+a\,P}{\sum_{j\neq i}\mathbb{1}\{x^k_j=x^k_i\}+a}$$
+<p>It looks safe, but it is not. Take the opposite extreme case: <b>one single category for all \(n\) rows</b>, target is 0/1, and let \(n^{+}\) be the number of ones. With \(a=0\):</p>
+$$\hat{x}^k_i=\frac{n^{+}-y_i}{\,n-1\,}$$
+<p>Now look carefully. The value is <b>different</b> for a row with \(y_i=0\) and a row with \(y_i=1\):</p>
+$$y_i=0\;\Rightarrow\;\hat{x}_i=\frac{n^{+}}{n-1},\qquad y_i=1\;\Rightarrow\;\hat{x}_i=\frac{n^{+}-1}{n-1}$$
+<p>So a split at the threshold \(t=\dfrac{n^{+}-0.5}{n-1}\) again separates the two classes <b>perfectly on the training set</b>, even though the feature is a single constant category and carries no information at all.</p>
+<div class="kbox"><div class="tt">Key Insight</div>
+<p>Leave-one-out does not use \(y_i\) directly, but \(y_i\) still <b>subtracts itself out</b> of the numerator, and the tree can read that subtraction. Any scheme where the encoding of row \(i\) depends on \(y_i\) &mdash; even negatively &mdash; leaks.</p></div>
+
+<h3><span class="nm">4.6</span>The Solution: Ordered Target Statistics</h3>
+<p>CatBoost borrows the idea from <b>online learning</b>: a model that sees data one example at a time can never cheat, because the future does not exist yet. But our dataset has no time column, so CatBoost <b>invents one</b> &mdash; a random permutation \(\sigma\).</p>
+<div class="rbox"><div class="tt">Formula / Result: Ordered Target Statistic</div>
+$$\hat{x}^k_i=\frac{\sum_{x_j\in\mathcal{D}_i}\mathbb{1}\{x^k_j=x^k_i\}\cdot y_j+a\,P}{\sum_{x_j\in\mathcal{D}_i}\mathbb{1}\{x^k_j=x^k_i\}+a},
+\qquad\mathcal{D}_i=\{x_j:\sigma(j)\lt\sigma(i)\}$$
+<p class="small">Only the <b>history</b> of row \(i\) is used. Row \(i\)'s own target never enters its own encoding, so there is no leakage. All rows still get used (every row is in the history of the later rows), so no data is wasted.</p></div>
+<p><b>Two practical details:</b></p>
+<ul>
+<li>The first row has an empty history, so it just gets the prior \(P\). Early rows have high variance, later rows are stable.</li>
+<li>To stop the early rows from always being noisy, CatBoost uses <b>several different permutations</b> &mdash; a new one for each tree. This averages out the variance.</li>
+</ul>
+
+<h4>Small numeric example</h4>
+<p>Prior \(P=0.5\), smoothing \(a=1\). Permutation order is simply row 1, 2, 3, 4, 5.</p>
+<table class="bk">
+<tr><th>#</th><th>city</th><th>y</th><th>History of same city</th><th>Ordered TS calculation</th><th>Value</th></tr>
+<tr><td>1</td><td>Delhi</td><td>1</td><td>&mdash; (empty)</td><td>(0 + 1&times;0.5) / (0 + 1)</td><td>0.500</td></tr>
+<tr><td>2</td><td>Pune</td><td>0</td><td>&mdash; (empty)</td><td>(0 + 0.5) / (0 + 1)</td><td>0.500</td></tr>
+<tr><td>3</td><td>Delhi</td><td>1</td><td>row 1 (y=1)</td><td>(1 + 0.5) / (1 + 1)</td><td>0.750</td></tr>
+<tr><td>4</td><td>Delhi</td><td>0</td><td>rows 1, 3 (y=1,1)</td><td>(2 + 0.5) / (2 + 1)</td><td>0.833</td></tr>
+<tr><td>5</td><td>Pune</td><td>1</td><td>row 2 (y=0)</td><td>(0 + 0.5) / (1 + 1)</td><td>0.250</td></tr>
+</table>
+<p class="small">Notice row 4: its own \(y=0\) does <b>not</b> pull the value down, because only rows 1 and 3 were used. That is exactly the leak that has been removed.</p>
+
+<h3><span class="nm">4.7</span>Feature Combinations</h3>
+<p>A single categorical column may be useless alone but strong in combination (for example <code>city</code> alone and <code>device</code> alone say little, but <code>Delhi + iPhone</code> says a lot). CatBoost builds these greedily:</p>
+<ul>
+<li>At the first split, only the single categorical features are considered.</li>
+<li>From the next split onwards, CatBoost joins the categorical features already used in the current tree with all other categorical features, treats the pair as one new category, encodes it with ordered TS, and considers it as a candidate split.</li>
+<li>All possible combinations would be \(2^{\,\#cat}\), so this greedy approach keeps it affordable.</li>
+</ul>
+<div class="nbox"><div class="tt">Note</div><p>For features with very few categories (default <code>one_hot_max_size = 2</code>) CatBoost simply uses <b>one-hot encoding</b>, because the leakage problem is small when the categories are few and large.</p></div>
+
+<h2><span class="nm">5</span>Problem 2: Prediction Shift and Ordered Boosting</h2>
+
+<h3><span class="nm">5.1</span>What is Prediction Shift?</h3>
+<p>This is the deeper problem, and it exists in <b>every</b> boosting library, not only when categorical features are present.</p>
+<p>In stage \(t\), ordinary gradient boosting computes the gradient of every training row using the current model \(F^{t-1}\):</p>
+$$g_i=-\left.\frac{\partial L(y_i,s)}{\partial s}\right|_{s=F^{t-1}(x_i)}$$
+<p>But \(F^{t-1}\) was <b>trained on the whole training set, including row \(i\) itself</b>. So the model already partly memorised \(y_i\), which makes \(F^{t-1}(x_i)\) unusually close to \(y_i\), which makes the gradient \(g_i\) unusually small.</p>
+<div class="kbox"><div class="tt">Key Insight</div>
+<p>The distribution of the gradient on a <b>training</b> point, \(g(x_i,y_i)\mid x_i\), is <b>not the same</b> as the distribution on a <b>test</b> point, \(g(x,y)\mid x\). This difference is called <b>prediction shift</b>. The trees are therefore fitted to slightly wrong targets, and the final model is biased. The size of the bias is of order \(1/n\), so it hurts most on <b>small datasets</b>.</p></div>
+<p class="small">It is the same disease as target leakage in section 4, just one level higher: there, the <i>feature</i> used \(y_i\); here, the <i>residual</i> uses \(y_i\).</p>
+
+<h3><span class="nm">5.2</span>Derivation Sketch of the Bias</h3>
+<p class="step">Step 1.</p>
+<p>Let the true (unknown) best function be \(f\). After stage \(t-1\) we have \(F^{t-1}\). Ideally we want the next tree \(h^t\) to approximate the true gradient:</p>
+$$h^{t}\approx \arg\min_h\;\mathbb{E}_{x,y}\big[(-g(x,y)-h(x))^2\big]$$
+<p class="step">Step 2.</p>
+<p>In practice we cannot take an expectation over the unknown distribution, so we replace it with the average over the training rows:</p>
+$$h^{t}=\arg\min_h\;\frac{1}{n}\sum_{i=1}^{n}\big(-g(x_i,y_i)-h(x_i)\big)^2$$
+<p class="step">Step 3.</p>
+<p>This swap is only valid if \(g(x_i,y_i)\mid x_i\) has the same distribution as \(g(x,y)\mid x\). It does not, because \(F^{t-1}\) saw \((x_i,y_i)\). Therefore</p>
+$$\mathbb{E}\big[g(x_i,y_i)\mid x_i\big]\neq\mathbb{E}\big[g(x,y)\mid x=x_i\big]$$
+<p>and every tree inherits a small bias, which then accumulates over hundreds of trees.</p>
+
+<h3><span class="nm">5.3</span>The Solution: Ordered Boosting</h3>
+<p>Use the <b>same ordered trick</b> again. Fix a random permutation \(\sigma\). For every row \(i\), compute its residual using a model that was trained only on the rows <b>before</b> \(i\).</p>
+<div class="rbox"><div class="tt">Formula / Result: Ordered Boosting Gradient</div>
+$$g_i=-\left.\frac{\partial L(y_i,s)}{\partial s}\right|_{s=M_{\sigma(i)-1}(x_i)}$$
+<p class="small">\(M_k\) = a supporting model trained on the first \(k\) rows of the permutation. Since \(M_{\sigma(i)-1}\) never saw \(y_i\), the gradient of row \(i\) is <b>unbiased</b>.</p></div>
+
+<h4>The algorithm in words</h4>
+<pre>Choose a random permutation sigma of the n training rows.
+Keep n supporting models  M_0, M_1, ..., M_(n-1).
+   M_k  is trained only on the first k rows.
+
+For each boosting round t:
+    For every row i:
+         residual_i  =  y_i  -  M_(sigma(i)-1) (x_i)      # unbiased residual
+    Build tree T_t on these residuals (structure is shared by all models)
+    Update every supporting model M_k with the part of T_t it is allowed to see
+Final model = sum of all trees x learning rate</pre>
+
+<div class="nbox"><div class="tt">Why this is practical</div>
+<p>Keeping \(n\) separate models would cost \(O(n^2)\) in time and memory. CatBoost keeps only \(\log_2 n\) supporting models (for sizes \(1,2,4,8,\dots\)) and uses a different permutation for each tree. That brings the cost back to the same order as ordinary boosting.</p></div>
+<div class="nbox"><div class="tt">Plain mode vs Ordered mode</div>
+<p><code>boosting_type='Ordered'</code> uses the full scheme above &mdash; better on <b>small datasets</b> (roughly under 50k rows) but slower. <code>boosting_type='Plain'</code> is ordinary boosting (still with ordered TS for the categories) and is the default on large data because the \(1/n\) bias is then negligible.</p></div>
+
+<h2><span class="nm">6</span>Oblivious (Symmetric) Trees</h2>
+<p>In XGBoost and LightGBM, every node can choose its own feature and threshold. In CatBoost, <b>all nodes at the same depth share one split</b>.</p>
+<div class="fig">
+<svg viewBox="0 0 560 170" xmlns="http://www.w3.org/2000/svg" font-family="Georgia,serif" font-size="9.5">
+  <text x="135" y="12" text-anchor="middle" font-weight="700">Normal tree (XGBoost / LightGBM)</text>
+  <g stroke="#333" fill="#fff">
+    <rect x="95" y="22" width="86" height="19"/><rect x="38" y="62" width="80" height="19"/><rect x="156" y="62" width="80" height="19"/>
+    <rect x="8" y="102" width="50" height="17"/><rect x="66" y="102" width="50" height="17"/>
+    <rect x="152" y="102" width="50" height="17"/><rect x="210" y="102" width="50" height="17"/>
+  </g>
+  <g text-anchor="middle" fill="#111">
+    <text x="138" y="35">age &lt; 30</text><text x="78" y="75">city = DL</text><text x="196" y="75">pay &lt; 500</text>
+    <text x="33" y="114">leaf</text><text x="91" y="114">leaf</text><text x="177" y="114">leaf</text><text x="235" y="114">leaf</text>
+  </g>
+  <g stroke="#333"><path d="M120 41 L78 62" fill="none"/><path d="M156 41 L196 62" fill="none"/>
+    <path d="M58 81 L33 102" fill="none"/><path d="M98 81 L91 102" fill="none"/>
+    <path d="M176 81 L177 102" fill="none"/><path d="M216 81 L235 102" fill="none"/></g>
+  <text x="135" y="140" text-anchor="middle" fill="#555">each node picks its own split &rarr; flexible, deeper fit</text>
+  <text x="135" y="155" text-anchor="middle" fill="#555">prediction = walk down, compare at each node</text>
+
+  <line x1="285" y1="5" x2="285" y2="165" stroke="#bbb"/>
+
+  <text x="425" y="12" text-anchor="middle" font-weight="700">Oblivious tree (CatBoost)</text>
+  <g stroke="#8a0f3c" fill="#f4e9f5">
+    <rect x="382" y="22" width="86" height="19"/>
+    <rect x="325" y="62" width="80" height="19"/><rect x="443" y="62" width="80" height="19"/>
+    <rect x="295" y="102" width="50" height="17"/><rect x="353" y="102" width="50" height="17"/>
+    <rect x="439" y="102" width="50" height="17"/><rect x="497" y="102" width="50" height="17"/>
+  </g>
+  <g text-anchor="middle" fill="#111">
+    <text x="425" y="35">age &lt; 30</text><text x="365" y="75">pay &lt; 500</text><text x="483" y="75">pay &lt; 500</text>
+    <text x="320" y="114">w0</text><text x="378" y="114">w1</text><text x="464" y="114">w2</text><text x="522" y="114">w3</text>
+  </g>
+  <g stroke="#8a0f3c" fill="none"><path d="M407 41 L365 62"/><path d="M443 41 L483 62"/>
+    <path d="M345 81 L320 102"/><path d="M385 81 L378 102"/><path d="M463 81 L464 102"/><path d="M503 81 L522 102"/></g>
+  <text x="425" y="140" text-anchor="middle" fill="#8a0f3c">same split on the whole level &rarr; only D decisions</text>
+  <text x="425" y="155" text-anchor="middle" fill="#8a0f3c">prediction = build a D-bit index, read w[index]</text>
+</svg>
+<div class="cap">Figure 6.1 &mdash; A depth-2 normal tree has 3 different splits; the oblivious tree has only 2.</div>
+</div>
+
+<div class="rbox"><div class="tt">Formula / Result: Leaf index of an oblivious tree</div>
+$$\text{leaf}(x)=\sum_{d=0}^{D-1}2^{\,d}\cdot\mathbb{1}\{x^{f_d}\gt t_d\}\;\in\;\{0,1,\dots,2^{D}-1\}$$
+<p class="small">Each level contributes one bit. The prediction is then just <code>leaf_values[index]</code> &mdash; a single array lookup, no branching.</p></div>
+
+<table class="grid">
+<tr><th style="width:150px">Advantage</th><th>Reason</th></tr>
+<tr><td>Very fast prediction</td><td>Depth \(D\) comparisons produce a \(D\)-bit number; the leaf value is one array lookup. No if-else chain, CPU-friendly, easy to vectorise. CatBoost inference is often <b>several times faster</b> than XGBoost.</td></tr>
+<tr><td>Acts as regularisation</td><td>Far fewer possible tree structures, so the tree cannot chase noise. This is one reason CatBoost often works well with default settings.</td></tr>
+<tr><td>Balanced and small</td><td>Always exactly \(2^D\) leaves, so the model size is predictable.</td></tr>
+<tr><td>Disadvantage</td><td>Less flexible than a free-form tree, so CatBoost sometimes needs <b>more trees</b> to reach the same accuracy.</td></tr>
+</table>
+
+<h2><span class="nm">7</span>Worked Numeric Example (Regression)</h2>
+<h3><span class="nm">7.1</span>Problem Statement</h3>
+<p>Predict <b>package (LPA)</b> from <b>city</b> (categorical) and <b>CGPA</b> (numeric). Learning rate \(\eta=0.1\), \(\lambda=0\), prior smoothing \(a=1\).</p>
+<table class="bk">
+<tr><th>#</th><th>city</th><th>CGPA</th><th>package y</th></tr>
+<tr><td>1</td><td>Delhi</td><td>8.0</td><td>6</td></tr>
+<tr><td>2</td><td>Pune</td><td>7.0</td><td>4</td></tr>
+<tr><td>3</td><td>Delhi</td><td>9.0</td><td>8</td></tr>
+<tr><td>4</td><td>Pune</td><td>6.0</td><td>2</td></tr>
+</table>
+
+<h3><span class="nm">7.2</span>Stage 1: Base Model</h3>
+$$F_0=\bar{y}=\frac{6+4+8+2}{4}=5$$
+
+<h3><span class="nm">7.3</span>Encode the Categorical Column (Ordered TS)</h3>
+<p>Prior \(P=\bar{y}=5\), \(a=1\), permutation = 1, 2, 3, 4.</p>
+<table class="bk">
+<tr><th>#</th><th>city</th><th>history of same city</th><th>calculation</th><th>encoded value</th></tr>
+<tr><td>1</td><td>Delhi</td><td>empty</td><td>(0 + 1&times;5)/(0+1)</td><td>5.00</td></tr>
+<tr><td>2</td><td>Pune</td><td>empty</td><td>(0 + 5)/(0+1)</td><td>5.00</td></tr>
+<tr><td>3</td><td>Delhi</td><td>row 1 (y=6)</td><td>(6 + 5)/(1+1)</td><td>5.50</td></tr>
+<tr><td>4</td><td>Pune</td><td>row 2 (y=4)</td><td>(4 + 5)/(1+1)</td><td>4.50</td></tr>
+</table>
+<p>The categorical column is now a normal numeric column and the tree can split on it.</p>
+
+<h3><span class="nm">7.4</span>Residuals</h3>
+<p>With squared loss, \(g_i=F_0-y_i\) and the residual is \(r_i=y_i-F_0\), \(h_i=1\).</p>
+<table class="bk">
+<tr><th>#</th><th>y</th><th>\(F_0\)</th><th>residual \(r=y-F_0\)</th></tr>
+<tr><td>1</td><td>6</td><td>5</td><td>+1</td></tr>
+<tr><td>2</td><td>4</td><td>5</td><td>&minus;1</td></tr>
+<tr><td>3</td><td>8</td><td>5</td><td>+3</td></tr>
+<tr><td>4</td><td>2</td><td>5</td><td>&minus;3</td></tr>
+</table>
+
+<h3><span class="nm">7.5</span>Build a Symmetric Tree of Depth 1</h3>
+<p>Because the tree is oblivious, we need only <b>one</b> split for the whole level. Try the candidate <code>CGPA &lt; 7.5</code>:</p>
+<p>Left (CGPA &lt; 7.5) = rows 2, 4 with residuals \(\{-1,-3\}\); Right = rows 1, 3 with residuals \(\{+1,+3\}\).</p>
+<p>Using \(G=\sum g_i=-\sum r_i\), \(H=\sum h_i=\) count, \(\lambda=0\):</p>
+$$\text{Gain}=\frac{1}{2}\left[\frac{G_L^2}{H_L}+\frac{G_R^2}{H_R}-\frac{G_P^2}{H_P}\right]
+=\frac{1}{2}\left[\frac{4^2}{2}+\frac{(-4)^2}{2}-\frac{0^2}{4}\right]=\frac{1}{2}\,[8+8-0]=8$$
+<p>Now try <code>city_encoded &lt; 5.25</code>: Left = rows 1, 2, 4 (values 5.00, 5.00, 4.50) with residuals \(\{+1,-1,-3\}\), Right = row 3 with \(\{+3\}\).</p>
+$$\text{Gain}=\frac{1}{2}\left[\frac{3^2}{3}+\frac{(-3)^2}{1}-0\right]=\frac{1}{2}\,[3+9]=6$$
+<p>The CGPA split wins (gain 8 &gt; 6), so the whole level uses <code>CGPA &lt; 7.5</code>.</p>
+
+<h3><span class="nm">7.6</span>Leaf Values and Update</h3>
+$$w_{\text{left}}=-\frac{G_L}{H_L+\lambda}=-\frac{4}{2}=-2,\qquad
+w_{\text{right}}=-\frac{G_R}{H_R+\lambda}=-\frac{-4}{2}=+2$$
+<p>(With squared loss this is simply the average residual of the leaf: \(\frac{-1-3}{2}=-2\) and \(\frac{1+3}{2}=+2\).)</p>
+$$F_1(x)=F_0+\eta\cdot T_1(x)=5+0.1\cdot w$$
+<table class="bk">
+<tr><th>#</th><th>leaf</th><th>w</th><th>\(F_1 = 5 + 0.1w\)</th><th>new residual</th></tr>
+<tr><td>1</td><td>right</td><td>+2</td><td>5.2</td><td>6 &minus; 5.2 = 0.8</td></tr>
+<tr><td>2</td><td>left</td><td>&minus;2</td><td>4.8</td><td>4 &minus; 4.8 = &minus;0.8</td></tr>
+<tr><td>3</td><td>right</td><td>+2</td><td>5.2</td><td>8 &minus; 5.2 = 2.8</td></tr>
+<tr><td>4</td><td>left</td><td>&minus;2</td><td>4.8</td><td>2 &minus; 4.8 = &minus;2.8</td></tr>
+</table>
+<p>Residuals have shrunk from \(\{1,-1,3,-3\}\) to \(\{0.8,-0.8,2.8,-2.8\}\). Stage 3 repeats the whole process with a <b>new random permutation</b>, so the encoded city values change slightly each round &mdash; that is the built-in averaging that reduces variance.</p>
+
+<h2><span class="nm">8</span>CatBoost for Classification</h2>
+<p>Everything above stays the same; only the loss changes to Log Loss, exactly as in XGBoost.</p>
+<table class="bk">
+<tr><th>Component</th><th>Regression (RMSE)</th><th>Classification (Logloss)</th></tr>
+<tr><td>Base model</td><td>\(F_0=\bar{y}\)</td><td>\(F_0=\ln\frac{p}{1-p}\) (log of odds)</td></tr>
+<tr><td>Prediction</td><td>\(\hat{y}=F(x)\)</td><td>\(p=\dfrac{e^{F(x)}}{1+e^{F(x)}}\)</td></tr>
+<tr><td>Gradient \(g_i\)</td><td>\(F(x_i)-y_i=-\text{residual}\)</td><td>\(p_i-y_i=-\text{residual}\)</td></tr>
+<tr><td>Hessian \(h_i\)</td><td>\(1\)</td><td>\(p_i(1-p_i)\)</td></tr>
+<tr><td>Leaf value</td><td>\(\dfrac{\sum r_i}{\text{count}+\lambda}\)</td><td>\(\dfrac{\sum r_i}{\sum p_i(1-p_i)+\lambda}\)</td></tr>
+<tr><td>Prior \(P\) for ordered TS</td><td>mean of \(y\)</td><td>fraction of positive class</td></tr>
+</table>
+<p class="small">For multiclass, CatBoost keeps one ordered TS per class and uses softmax instead of sigmoid.</p>
+
+<h2><span class="nm">9</span>Important Notes</h2>
+<h3><span class="nm">9.1</span>Main Hyperparameters</h3>
+<table class="grid">
+<tr><th style="width:150px">Parameter</th><th>Meaning</th><th>Typical</th></tr>
+<tr><td><code>iterations</code></td><td>Number of trees</td><td>500&ndash;2000 (with early stopping)</td></tr>
+<tr><td><code>learning_rate</code></td><td>\(\eta\), shrinkage</td><td>0.03&ndash;0.1 (auto-set by default)</td></tr>
+<tr><td><code>depth</code></td><td>Depth of the symmetric tree</td><td>6 (range 4&ndash;10)</td></tr>
+<tr><td><code>l2_leaf_reg</code></td><td>\(\lambda\), L2 on leaf values</td><td>3</td></tr>
+<tr><td><code>boosting_type</code></td><td><code>Ordered</code> or <code>Plain</code></td><td>Ordered for small data</td></tr>
+<tr><td><code>one_hot_max_size</code></td><td>Use one-hot below this many categories</td><td>2 (raise to ~10 if useful)</td></tr>
+<tr><td><code>cat_features</code></td><td>List of categorical column names/indices</td><td>must be given</td></tr>
+<tr><td><code>random_strength</code></td><td>Noise added to split scores (regularisation)</td><td>1</td></tr>
+<tr><td><code>bagging_temperature</code></td><td>Strength of Bayesian bootstrap</td><td>1</td></tr>
+<tr><td><code>early_stopping_rounds</code></td><td>Stop when validation stops improving</td><td>50&ndash;100</td></tr>
+</table>
+<h3><span class="nm">9.2</span>Practical Points</h3>
+<ul>
+<li><b>Do not encode the categorical columns yourself.</b> Pass the raw strings and list them in <code>cat_features</code>. If you label-encode first, you lose the whole benefit.</li>
+<li>Categorical columns must be <code>str</code> or <code>int</code> &mdash; float categories throw an error.</li>
+<li>CatBoost has the best "works well without tuning" reputation of the three, mainly because of the oblivious trees and the ordered scheme.</li>
+<li>It also supports <b>text features</b> and <b>embedding features</b>, and has GPU training.</li>
+<li>Missing values: numeric NaN is handled automatically (sent to one side); missing categories are treated as their own category.</li>
+</ul>
+
+<h2><span class="nm">10</span>CatBoost Mind Map</h2>
+<div class="fig">
+<svg viewBox="0 0 560 300" xmlns="http://www.w3.org/2000/svg" font-family="Georgia,serif" font-size="9">
+  <rect x="8" y="128" width="78" height="30" rx="5" fill="#8a0f3c"/>
+  <text x="47" y="147" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">CatBoost</text>
+  <g stroke="#999" fill="none">
+    <path d="M86 143 L120 46"/><path d="M86 143 L120 110"/><path d="M86 143 L120 176"/><path d="M86 143 L120 250"/>
+  </g>
+  <g>
+    <rect x="120" y="32" width="130" height="26" rx="4" fill="#f4e9f5" stroke="#8a0f3c"/>
+    <text x="185" y="49" text-anchor="middle" font-weight="700">Categorical handling</text>
+    <rect x="120" y="97" width="130" height="26" rx="4" fill="#f4e9f5" stroke="#8a0f3c"/>
+    <text x="185" y="114" text-anchor="middle" font-weight="700">Ordered Boosting</text>
+    <rect x="120" y="163" width="130" height="26" rx="4" fill="#f4e9f5" stroke="#8a0f3c"/>
+    <text x="185" y="180" text-anchor="middle" font-weight="700">Oblivious Trees</text>
+    <rect x="120" y="237" width="130" height="26" rx="4" fill="#f4e9f5" stroke="#8a0f3c"/>
+    <text x="185" y="254" text-anchor="middle" font-weight="700">Boosting maths</text>
+  </g>
+  <g stroke="#bbb" fill="none">
+    <path d="M250 45 L280 20"/><path d="M250 45 L280 40"/><path d="M250 45 L280 60"/><path d="M250 45 L280 80"/>
+    <path d="M250 110 L280 100"/><path d="M250 110 L280 120"/><path d="M250 110 L280 140"/>
+    <path d="M250 176 L280 165"/><path d="M250 176 L280 185"/><path d="M250 176 L280 205"/>
+    <path d="M250 250 L280 232"/><path d="M250 250 L280 252"/><path d="M250 250 L280 272"/>
+  </g>
+  <g fill="#111">
+    <text x="286" y="23">problem: one-hot explodes, label encoding gives fake order</text>
+    <text x="286" y="43">target encoding leaks: ŵ = y when category is unique</text>
+    <text x="286" y="63">leave-one-out also leaks: (n+ &minus; y) / (n&minus;1)</text>
+    <text x="286" y="83" font-weight="700">Ordered TS: use only rows before i in permutation</text>
+    <text x="286" y="103">problem: prediction shift (residual uses own y)</text>
+    <text x="286" y="123">bias of order 1/n &mdash; worst on small data</text>
+    <text x="286" y="143" font-weight="700">fix: gradient from model M that never saw row i</text>
+    <text x="286" y="168">same split on the whole level</text>
+    <text x="286" y="188">leaf index = D-bit number &rarr; array lookup</text>
+    <text x="286" y="208" font-weight="700">very fast inference + acts as regularisation</text>
+    <text x="286" y="235">leaf value w = &minus;G / (H + &#955;)</text>
+    <text x="286" y="255">gain = &frac12;[G&#178;L/HL + G&#178;R/HR &minus; G&#178;P/HP]</text>
+    <text x="286" y="275">update F_m = F_(m&minus;1) + &#951; T_m</text>
+  </g>
+</svg>
+</div>
+
+<!-- =================== PART 2 =================== -->
+<div class="part">
+  <div class="pk">Part 2</div>
+  <h1>LightGBM</h1>
+  <p>Light Gradient Boosting Machine &mdash; Microsoft, 2017</p>
+</div>
+
+<h2><span class="nm">1</span>Summary of All Formulas</h2>
+
+<div class="fbox"><div class="tt">A. Split Gain (same boosting maths as XGBoost)</div><div class="bd">
+$$\text{Gain}=\frac{1}{2}\left[\frac{G_L^2}{H_L+\lambda}+\frac{G_R^2}{H_R+\lambda}-\frac{G_P^2}{H_P+\lambda}\right]-\gamma,
+\qquad w_j=-\frac{G_j}{H_j+\lambda}$$
+<p><b>Variance gain used in the LightGBM paper (gradients only):</b></p>
+$$V_{j}(d)=\frac{1}{n}\left[\frac{\big(\sum_{x_i\in O:\;x_{ij}\le d}g_i\big)^2}{n_{l}(d)}+\frac{\big(\sum_{x_i\in O:\;x_{ij}\gt d}g_i\big)^2}{n_{r}(d)}\right]$$
+</div></div>
+
+<div class="fbox"><div class="tt">B. Histogram Algorithm</div><div class="bd">
+<p>Each feature value is replaced by a <b>bin index</b>:</p>
+$$\text{bin}(x_{ij})=k\quad\text{if}\quad b_{k-1}\lt x_{ij}\le b_k,\qquad k=1\dots K\;(K=255\text{ by default})$$
+<p>Histogram of a node: for every bin \(k\), store \(\;\sum g_i,\;\sum h_i,\;\text{count}\).</p>
+<p><b>Histogram subtraction trick:</b></p>
+$$\text{Hist}_{\text{sibling}}=\text{Hist}_{\text{parent}}-\text{Hist}_{\text{child}}$$
+<p><b>Cost:</b> building \(O(\#data\times\#feature)\), split search \(O(\#bin\times\#feature)\).</p>
+</div></div>
+
+<div class="fbox"><div class="tt">C. GOSS &mdash; Gradient-based One-Side Sampling</div><div class="bd">
+<p>Keep the top \(a\times 100\%\) rows by \(|g|\) (set \(A\)), randomly sample \(b\times 100\%\) of the rest (set \(B\)), and <b>amplify</b> the sampled small-gradient rows:</p>
+$$\tilde{V}_j(d)=\frac{1}{n}\left[\frac{\Big(\sum_{x_i\in A_l}g_i+\frac{1-a}{b}\sum_{x_i\in B_l}g_i\Big)^2}{n_l(d)}
++\frac{\Big(\sum_{x_i\in A_r}g_i+\frac{1-a}{b}\sum_{x_i\in B_r}g_i\Big)^2}{n_r(d)}\right]$$
+<p><b>The amplification constant:</b></p>
+$$\boxed{\;\text{weight}=\frac{1-a}{b}\;}$$
+</div></div>
+
+<div class="fbox"><div class="tt">D. EFB &mdash; Exclusive Feature Bundling</div><div class="bd">
+<p>Two features are <b>exclusive</b> if they are rarely non-zero at the same time. Merge them with an offset:</p>
+$$x_{\text{bundle}}=\begin{cases}x_A & \text{if } x_A\neq 0\\[2pt] x_B+\text{offset}_A & \text{if } x_A=0\end{cases},
+\qquad \text{offset}_A=\max(x_A)$$
+<p>Complexity drops from \(O(\#data\times\#feature)\) to \(O(\#data\times\#bundle)\).</p>
+</div></div>
+
+<div class="fbox"><div class="tt">E. Leaf-wise Growth</div><div class="bd">
+<p>At every step, split the <b>one leaf</b> in the whole tree that gives the biggest gain:</p>
+$$\text{leaf}^{*}=\arg\max_{\text{all current leaves}}\;\text{Gain}(\text{leaf})$$
+<p>Controlled by <code>num_leaves</code>, with the safety relation \(\;\texttt{num\_leaves}\le 2^{\texttt{max\_depth}}\).</p>
+</div></div>
+
+<h2><span class="nm">2</span>What is LightGBM?</h2>
+<p>LightGBM = <b>Light</b> Gradient Boosting Machine, from Microsoft (2017). "Light" means <b>fast to train and small in memory</b>. The accuracy is about the same as XGBoost &mdash; the contribution is <b>speed</b>.</p>
+<p>It achieves this with four ideas:</p>
+<ol>
+<li><b>Histogram-based split finding</b> &mdash; put continuous values into 255 bins instead of sorting them.</li>
+<li><b>GOSS</b> &mdash; drop most of the rows that are already well predicted.</li>
+<li><b>EFB</b> &mdash; merge sparse features that are never non-zero together.</li>
+<li><b>Leaf-wise tree growth</b> &mdash; grow where the loss drops most, instead of level by level.</li>
+</ol>
+<div class="kbox"><div class="tt">The one-line answer</div>
+<p>"LightGBM is gradient boosting made fast. It bins features into histograms, uses <b>GOSS</b> to keep only the informative rows, uses <b>EFB</b> to merge sparse features, and grows trees <b>leaf-wise</b> instead of level-wise. The result is the same accuracy as XGBoost with much less time and memory."</p></div>
+
+<h3><span class="nm">2.1</span>The Big Picture</h3>
+<p>The boosting loop is identical to XGBoost: base model &rarr; gradients and Hessians &rarr; build a tree &rarr; add \(\eta\times\) tree &rarr; repeat. The leaf value and the gain formula are the same. Only the <b>way the tree is built</b> changes.</p>
+
+<h2><span class="nm">3</span>Core Concepts</h2>
+<div class="rbox"><div class="tt">1. Bin / Histogram</div><p>A feature's continuous values are grouped into at most <code>max_bin</code> (255) buckets. The tree then only considers 254 candidate thresholds instead of every unique value.</p></div>
+<div class="rbox"><div class="tt">2. Gradient as "how wrong we still are"</div><p>A row with a large \(|g|\) is still badly predicted and is <b>informative</b>; a row with a small \(|g|\) is already learnt. GOSS uses this.</p></div>
+<div class="rbox"><div class="tt">3. Exclusive features</div><p>In sparse data (one-hot, bag of words), many columns are zero almost everywhere, and two such columns are rarely non-zero in the same row. They can safely share one column.</p></div>
+<div class="rbox"><div class="tt">4. Leaf-wise (best-first) growth</div><p>Instead of completing a level, LightGBM finds the single leaf with the highest gain anywhere in the tree and splits that one. This gives lower loss for the same number of leaves, but the tree becomes deep and unbalanced.</p></div>
+
+<h2><span class="nm">4</span>Histogram-based Split Finding</h2>
+
+<h3><span class="nm">4.1</span>The Problem with the Exact Greedy Algorithm</h3>
+<p>XGBoost's exact method, for one feature in one node:</p>
+<ol>
+<li>Sort all values of that feature (pre-sorted once, kept in memory).</li>
+<li>Scan left to right, keeping a running \(G_L,H_L\), and evaluate the gain at <b>every</b> possible threshold.</li>
+</ol>
+<p>Cost per level: \(O(\#data\times\#feature)\) for the scan, and the memory holds the sorted indices plus the float values &mdash; typically <b>two large arrays</b>. On a dataset with 10 million rows this is very heavy.</p>
+
+<h3><span class="nm">4.2</span>The Histogram Idea (derivation)</h3>
+<p class="step">Step 1: Bin once, at the start.</p>
+<p>For each feature, find 255 bin boundaries (by quantiles) and replace every float value by a <b>bin index that fits in 1 byte</b>. A <code>float64</code> is 8 bytes, a <code>uint8</code> is 1 byte &rarr; <b>8&times; less memory</b>, and no sorted-index array is needed at all.</p>
+<p class="step">Step 2: Build the histogram of a node.</p>
+<p>Go through the rows of the node once. For each row add its \(g_i\) and \(h_i\) into the bucket of its bin:</p>
+$$G_k=\sum_{i:\;\text{bin}(x_{ij})=k}g_i,\qquad H_k=\sum_{i:\;\text{bin}(x_{ij})=k}h_i,\qquad n_k=\text{count}$$
+<p>This costs \(O(\#data)\) per feature &mdash; one pass, no sorting.</p>
+<p class="step">Step 3: Find the split from the histogram only.</p>
+<p>A candidate split "bin \(\le k\)" gives, by a running sum over bins:</p>
+$$G_L=\sum_{m\le k}G_m,\qquad H_L=\sum_{m\le k}H_m,\qquad G_R=G_P-G_L,\qquad H_R=H_P-H_L$$
+<p>and then the usual gain formula. This loop runs over <b>255 bins</b>, not over millions of rows.</p>
+<div class="rbox"><div class="tt">Formula / Result: Cost comparison</div>
+<table class="bk" style="margin:4px 0">
+<tr><th>Step</th><th>Exact greedy (XGBoost)</th><th>Histogram (LightGBM)</th></tr>
+<tr><td>Pre-processing</td><td>sort every feature: \(O(\#data\log\#data)\)</td><td>bin every feature: \(O(\#data)\), done once</td></tr>
+<tr><td>Build structure per node</td><td>&mdash;</td><td>\(O(\#data\times\#feature)\)</td></tr>
+<tr><td>Find best split</td><td>\(O(\#data\times\#feature)\)</td><td>\(O(\#bin\times\#feature)\)</td></tr>
+<tr><td>Memory</td><td>values + sorted indices (8 bytes each)</td><td>bin index only (1 byte)</td></tr>
+</table></div>
+
+<h3><span class="nm">4.3</span>The Histogram Subtraction Trick</h3>
+<p>This is the part interviewers like.</p>
+<p>Every row of the parent goes either left or right, so for every bin \(k\):</p>
+$$G_k^{\text{parent}}=G_k^{\text{left}}+G_k^{\text{right}}\;\Longrightarrow\;
+G_k^{\text{right}}=G_k^{\text{parent}}-G_k^{\text{left}}$$
+<div class="kbox"><div class="tt">Key Insight</div>
+<p>So we only build the histogram of the <b>smaller child</b> (fewer rows to scan) and get the bigger child's histogram <b>for free by subtraction</b>. Since the smaller child has at most half the rows, this roughly <b>halves</b> the work at every level.</p></div>
+
+<h3><span class="nm">4.4</span>Does Binning Hurt Accuracy?</h3>
+<p>The split can only be placed on a bin boundary, so it is an <b>approximate</b> split. In practice the loss of accuracy is tiny, and the coarser threshold actually works as <b>regularisation</b> (it cannot cut between two nearly identical values just to fit noise). Lower <code>max_bin</code> = faster and more regularised; higher = slower and more exact.</p>
+
+<h2><span class="nm">5</span>GOSS &mdash; Gradient-based One-Side Sampling</h2>
+
+<h3><span class="nm">5.1</span>The Idea</h3>
+<p>In AdaBoost every row carries a weight, so you know which rows matter. In gradient boosting there is no weight &mdash; so what tells us a row is important? The <b>gradient</b>.</p>
+<ul>
+<li>Large \(|g_i|\): the model is still very wrong on this row &rarr; <b>informative</b>, keep it.</li>
+<li>Small \(|g_i|\): the model already predicts this row well &rarr; it contributes almost nothing to the gain, and we can drop most of them.</li>
+</ul>
+<p>Simply deleting all small-gradient rows would be wrong, because it <b>changes the data distribution</b> &mdash; the computed gain would no longer be an estimate of the true gain. GOSS fixes that with one constant.</p>
+
+<h3><span class="nm">5.2</span>The Algorithm</h3>
+<pre>Input: training rows with gradients g, sampling ratios a and b
+
+1. Sort all n rows by |g| in decreasing order.
+2. Set A  = the top  a*n  rows            (large gradient - keep ALL)
+3. Set A' = the remaining (1-a)*n rows    (small gradient)
+4. Set B  = a RANDOM sample of  b*n  rows taken from A'
+5. Multiply the gradients (and Hessians) of the rows in B by (1-a)/b
+6. Build the tree using only the rows A union B</pre>
+<p>Typical values: \(a=0.2\), \(b=0.1\) &rarr; the tree is built on \(0.2n+0.1n = 0.3n\) rows, i.e. about <b>one third</b> of the data.</p>
+
+<h3><span class="nm">5.3</span>Derivation of the Constant \(\frac{1-a}{b}\)</h3>
+<p class="step">Step 1: What we want.</p>
+<p>The true gain needs the sum of gradients over <b>all</b> rows in a side of the split:</p>
+$$S_{\text{true}}=\sum_{i\in A_l}g_i+\sum_{i\in A'_l}g_i$$
+<p>The first part is exact (we kept all of \(A\)). The problem is the second part &mdash; we only have the sample \(B_l\subset A'_l\).</p>
+<p class="step">Step 2: Count how many rows each sampled row must represent.</p>
+<p>The small-gradient group \(A'\) has \((1-a)n\) rows. From it we sampled \(bn\) rows. So each sampled row stands for</p>
+$$\frac{\text{size of the group}}{\text{size of the sample}}=\frac{(1-a)\,n}{b\,n}=\frac{1-a}{b}\quad\text{rows.}$$
+<p class="step">Step 3: Apply the weight and check it is unbiased.</p>
+<p>Give every sampled row the weight \(w=\frac{1-a}{b}\). Because \(B\) is a uniform random sample of \(A'\), the expected value of the weighted sum is</p>
+$$\mathbb{E}\!\left[\frac{1-a}{b}\sum_{i\in B_l}g_i\right]=\frac{1-a}{b}\cdot b\,n\cdot\overline{g}_{A'_l}=(1-a)\,n\cdot\overline{g}_{A'_l}=\sum_{i\in A'_l}g_i$$
+<p>which is exactly the quantity we were missing. So the estimate is <b>unbiased</b>.</p>
+<div class="rbox"><div class="tt">Formula / Result: GOSS estimated gain</div>
+$$\tilde{V}_j(d)=\frac{1}{n}\left[\frac{\Big(\sum_{x_i\in A_l}g_i+\frac{1-a}{b}\sum_{x_i\in B_l}g_i\Big)^2}{n_l(d)}
++\frac{\Big(\sum_{x_i\in A_r}g_i+\frac{1-a}{b}\sum_{x_i\in B_r}g_i\Big)^2}{n_r(d)}\right]$$
+</div>
+<p class="step">Step 4: Sanity check with numbers.</p>
+<p>Take \(a=0.2,\;b=0.1\). Then \(w=\frac{1-0.2}{0.1}=\frac{0.8}{0.1}=8\). Makes sense: the small-gradient group holds 80% of the rows and we kept only 10%, so each kept row speaks for 8 rows.</p>
+<div class="kbox"><div class="tt">Key Insight</div>
+<p>GOSS is <b>not</b> plain random sampling. It keeps every important row and only samples the boring ones, then re-weights them so the gain stays unbiased. The LightGBM paper proves the approximation error shrinks as \(O(1/n)\), so on large datasets GOSS loses almost no accuracy while using about one third of the rows.</p></div>
+<p class="small">In the library this is <code>boosting_type='goss'</code>. The default is <code>'gbdt'</code> (no sampling). A related option is <code>bagging_fraction</code>, which is ordinary random row sampling.</p>
+
+<h2><span class="nm">6</span>EFB &mdash; Exclusive Feature Bundling</h2>
+
+<h3><span class="nm">6.1</span>The Observation</h3>
+<p>After one-hot encoding, a column like <code>city_Delhi</code> is 1 only for Delhi rows and 0 everywhere else. <code>city_Pune</code> is 1 only for Pune rows. These two columns are <b>never non-zero in the same row</b> &mdash; they are <b>mutually exclusive</b>. In such sparse data, most feature pairs behave this way.</p>
+<p>If a bundle of such features is stored as <b>one</b> feature, the number of features drops a lot and the histogram cost \(O(\#data\times\#feature)\) becomes \(O(\#data\times\#bundle)\) &mdash; with no information lost.</p>
+
+<h3><span class="nm">6.2</span>Sub-problem 1: Which features to bundle?</h3>
+<p>Build a graph: each feature is a vertex, and two vertices are joined by an edge if the two features <b>conflict</b> (are non-zero together) too often. Finding the minimum number of bundles is then <b>graph colouring</b>, which is NP-hard, so LightGBM uses a greedy approximation:</p>
+<pre>1. Count the conflicts for every pair; build the graph with weighted edges.
+2. Sort the features by degree (most conflicting first).
+3. For each feature in order:
+       try to put it in an existing bundle whose total conflict
+       stays below a tolerance gamma;
+       if none fits, open a new bundle.</pre>
+<p>Allowing a small conflict rate \(\gamma\) (a few rows where both are non-zero) makes the bundles much smaller, and the accuracy loss is bounded by \(O\big((1-\gamma)^{-2/3}\big)\) in the paper &mdash; in short, a small \(\gamma\) is safe.</p>
+
+<h3><span class="nm">6.3</span>Sub-problem 2: How to merge them?</h3>
+<p>The merged column must let the histogram still tell the two original features apart. The trick is an <b>offset</b>.</p>
+<div class="rbox"><div class="tt">Formula / Result: Merging with offsets</div>
+<p>Let feature \(A\) take values in \([0,10]\) and feature \(B\) in \([0,20]\). Add \(\text{offset}_A=10\) to \(B\):</p>
+$$x_{\text{bundle}}=\begin{cases}x_A & \text{if } x_A\neq 0\quad\text{(range } 1\text{–}10)\\[2pt]
+x_B+10 & \text{if } x_A=0,\;x_B\neq 0\quad\text{(range } 11\text{–}30)\\[2pt]
+0 & \text{if both are } 0\end{cases}$$
+<p class="small">Now bins 1&ndash;10 of the bundle mean "feature A had this value" and bins 11&ndash;30 mean "feature B had this value". A split inside either range still recovers the original feature exactly.</p></div>
+<div class="kbox"><div class="tt">Key Insight</div>
+<p>EFB is lossless for truly exclusive features. It is what makes LightGBM very strong on <b>sparse, high-dimensional, one-hot encoded</b> data.</p></div>
+
+<h2><span class="nm">7</span>Leaf-wise vs Level-wise Growth</h2>
+<div class="fig">
+<svg viewBox="0 0 560 160" xmlns="http://www.w3.org/2000/svg" font-family="Georgia,serif" font-size="9">
+  <text x="130" y="12" text-anchor="middle" font-weight="700">Level-wise (XGBoost default)</text>
+  <g fill="#e8eefb" stroke="#1a4fa0">
+    <circle cx="130" cy="34" r="10"/>
+    <circle cx="94" cy="68" r="10"/><circle cx="166" cy="68" r="10"/>
+    <circle cx="70" cy="104" r="10"/><circle cx="118" cy="104" r="10"/><circle cx="142" cy="104" r="10"/><circle cx="190" cy="104" r="10"/>
+  </g>
+  <g stroke="#1a4fa0" fill="none">
+    <path d="M123 42 L101 60"/><path d="M137 42 L159 60"/>
+    <path d="M87 76 L77 96"/><path d="M101 76 L111 96"/><path d="M159 76 L149 96"/><path d="M173 76 L183 96"/>
+  </g>
+  <text x="130" y="131" text-anchor="middle" fill="#555">complete one full level, then go deeper</text>
+  <text x="130" y="145" text-anchor="middle" fill="#555">balanced, splits even low-gain nodes (wasted work)</text>
+
+  <line x1="285" y1="5" x2="285" y2="155" stroke="#bbb"/>
+
+  <text x="425" y="12" text-anchor="middle" font-weight="700">Leaf-wise (LightGBM)</text>
+  <g fill="#eaf6ee" stroke="#2e7d4f">
+    <circle cx="400" cy="34" r="10"/>
+    <circle cx="364" cy="68" r="10"/><circle cx="436" cy="68" r="10"/>
+    <circle cx="340" cy="104" r="10"/><circle cx="388" cy="104" r="10"/>
+    <circle cx="364" cy="138" r="10"/><circle cx="412" cy="138" r="10"/>
+  </g>
+  <g stroke="#2e7d4f" fill="none">
+    <path d="M393 42 L371 60"/><path d="M407 42 L429 60"/>
+    <path d="M357 76 L347 96"/><path d="M371 76 L381 96"/>
+    <path d="M381 112 L371 130"/><path d="M395 112 L405 130"/>
+  </g>
+  <text x="500" y="72" fill="#2e7d4f">not split:</text><text x="500" y="84" fill="#2e7d4f">low gain</text>
+  <text x="425" y="156" text-anchor="middle" fill="#555">always split the best leaf anywhere in the tree</text>
+</svg>
+<div class="cap">Figure 7.1 &mdash; Same number of leaves, but leaf-wise spends them where the loss drops most.</div>
+</div>
+<table class="grid">
+<tr><th style="width:120px">Point</th><th>Level-wise</th><th>Leaf-wise</th></tr>
+<tr><td>Rule</td><td>Split every node of the current depth</td><td>Split the single leaf with the maximum gain</td></tr>
+<tr><td>Shape</td><td>Balanced</td><td>Deep and unbalanced</td></tr>
+<tr><td>Loss for the same number of leaves</td><td>Higher</td><td><b>Lower</b></td></tr>
+<tr><td>Overfitting risk</td><td>Lower</td><td><b>Higher</b>, especially on small data</td></tr>
+<tr><td>Controlled by</td><td><code>max_depth</code></td><td><code>num_leaves</code>, <code>min_data_in_leaf</code>, <code>max_depth</code></td></tr>
+</table>
+<div class="nbox"><div class="tt">The rule everyone asks about</div>
+<p>In LightGBM the main complexity knob is <b><code>num_leaves</code>, not <code>max_depth</code></b>. Keep <code>num_leaves</code> \(\le 2^{\texttt{max\_depth}}\). For example with <code>max_depth = 7</code>, do not set <code>num_leaves</code> above 128; a common safe choice is around 70&ndash;80 so the tree is not a thin deep chain.</p></div>
+
+<h2><span class="nm">8</span>Categorical Features in LightGBM</h2>
+<p>LightGBM accepts categorical columns directly (<code>categorical_feature=[...]</code>), but its method is different from CatBoost &mdash; there is no target statistic and no ordering.</p>
+<p>It uses <b>Fisher's method</b> for partitioning categories:</p>
+<ol>
+<li>For each category \(c\), compute \(\dfrac{\sum_{i\in c}g_i}{\sum_{i\in c}h_i}\).</li>
+<li><b>Sort</b> the categories by that ratio.</li>
+<li>Find the best split on this sorted list, exactly like a numeric feature.</li>
+</ol>
+<p>Cost is \(O(k\log k)\) for \(k\) categories instead of \(O(2^{k-1})\) for all possible subsets.</p>
+<div class="nbox"><div class="tt">Caution</div>
+<p>This is powerful but <b>overfits on high-cardinality columns</b>, because a category with 2 rows can get its own branch. Control it with <code>min_data_per_group</code> and <code>cat_smooth</code>, or just use CatBoost when the categorical columns are the main signal.</p></div>
+
+<h2><span class="nm">9</span>Worked Numeric Example</h2>
+<h3><span class="nm">9.1</span>Binning and the Histogram</h3>
+<p>Eight rows, one feature CGPA, squared loss so \(h_i=1\) and \(g_i=\hat{y}-y=-r\). Suppose after the base model the gradients are:</p>
+<table class="bk">
+<tr><th>row</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td></tr>
+<tr><th>CGPA</th><td>5.1</td><td>5.4</td><td>6.2</td><td>6.8</td><td>7.3</td><td>7.9</td><td>8.6</td><td>9.1</td></tr>
+<tr><th>\(g_i\)</th><td>+3</td><td>+2</td><td>+2</td><td>+1</td><td>&minus;1</td><td>&minus;2</td><td>&minus;2</td><td>&minus;3</td></tr>
+</table>
+<p>Use \(K=4\) bins with boundaries 6, 7, 8:</p>
+<table class="bk">
+<tr><th>bin</th><th>range</th><th>rows</th><th>\(G_k=\sum g\)</th><th>\(H_k=\) count</th></tr>
+<tr><td>1</td><td>CGPA \(\le\) 6</td><td>1, 2</td><td>+5</td><td>2</td></tr>
+<tr><td>2</td><td>6 &ndash; 7</td><td>3, 4</td><td>+3</td><td>2</td></tr>
+<tr><td>3</td><td>7 &ndash; 8</td><td>5, 6</td><td>&minus;3</td><td>2</td></tr>
+<tr><td>4</td><td>CGPA \(\gt\) 8</td><td>7, 8</td><td>&minus;5</td><td>2</td></tr>
+</table>
+<p>The whole node is now 4 numbers instead of 8 rows. Parent totals: \(G_P=0,\;H_P=8\).</p>
+
+<h3><span class="nm">9.2</span>Finding the Split from the Histogram (\(\lambda=0\))</h3>
+<p>Only 3 candidate splits exist (after bin 1, after bin 2, after bin 3) &mdash; we use running sums:</p>
+<table class="bk">
+<tr><th>split</th><th>\(G_L,H_L\)</th><th>\(G_R,H_R\)</th><th>Gain \(=\frac12\big[\frac{G_L^2}{H_L}+\frac{G_R^2}{H_R}-0\big]\)</th></tr>
+<tr><td>after bin 1</td><td>+5, 2</td><td>&minus;5, 6</td><td>\(\frac12[12.5+4.17]=8.33\)</td></tr>
+<tr><td>after bin 2</td><td>+8, 4</td><td>&minus;8, 4</td><td>\(\frac12[16+16]=\mathbf{16.0}\)</td></tr>
+<tr><td>after bin 3</td><td>+5, 6</td><td>&minus;5, 2</td><td>\(\frac12[4.17+12.5]=8.33\)</td></tr>
+</table>
+<p>Best split = <b>after bin 2</b>, i.e. CGPA \(\le 7\). Leaf values:</p>
+$$w_L=-\frac{G_L}{H_L+\lambda}=-\frac{8}{4}=-2,\qquad w_R=-\frac{-8}{4}=+2$$
+
+<h3><span class="nm">9.3</span>The Subtraction Trick in Action</h3>
+<p>The left child has rows 1&ndash;4 and the right child has rows 5&ndash;8. LightGBM scans only <b>one</b> of them (say the left, 4 rows) to build its histogram, and gets the right child's histogram as</p>
+$$\text{Hist}_{\text{right}}=\text{Hist}_{\text{parent}}-\text{Hist}_{\text{left}}$$
+<p>bin by bin, with <b>no data scan at all</b>.</p>
+
+<h3><span class="nm">9.4</span>GOSS on the Same Data</h3>
+<p>Take \(a=0.25,\;b=0.25\), so \(w=\frac{1-0.25}{0.25}=3\).</p>
+<ul>
+<li>Sort by \(|g|\): rows 1 (3), 8 (3), 2 (2), 3 (2), 6 (2), 7 (2), 4 (1), 5 (1).</li>
+<li>Set \(A\) = top \(0.25\times 8=2\) rows &rarr; rows 1 and 8. Keep their gradients as they are.</li>
+<li>Set \(B\) = random \(0.25\times 8=2\) rows from the other six &rarr; say rows 3 and 6. Their gradients become \(2\times 3=6\) and \(-2\times 3=-6\).</li>
+<li>Build the tree on just these 4 rows with gradients \(\{+3,\,+6,\,-6,\,-3\}\).</li>
+</ul>
+<p>The weighted sum is \(3+6-6-3=0\), the same as the true total \(G_P=0\) &mdash; the estimate stayed unbiased while using half the rows.</p>
+
+<h2><span class="nm">10</span>Important Notes</h2>
+<h3><span class="nm">10.1</span>Main Hyperparameters</h3>
+<table class="grid">
+<tr><th style="width:155px">Parameter</th><th>Meaning</th><th>Typical</th></tr>
+<tr><td><code>num_leaves</code></td><td><b>Main complexity control.</b> Max leaves in one tree</td><td>31 (default); keep \(\le 2^{\text{max\_depth}}\)</td></tr>
+<tr><td><code>max_depth</code></td><td>Safety limit on depth (&minus;1 = no limit)</td><td>&minus;1, or 5&ndash;8 on small data</td></tr>
+<tr><td><code>learning_rate</code></td><td>\(\eta\)</td><td>0.05&ndash;0.1</td></tr>
+<tr><td><code>n_estimators</code></td><td>Number of trees</td><td>500&ndash;5000 with early stopping</td></tr>
+<tr><td><code>min_data_in_leaf</code></td><td>Minimum rows in a leaf &mdash; <b>the main anti-overfit knob</b></td><td>20 (raise to 100+ on small data)</td></tr>
+<tr><td><code>max_bin</code></td><td>Number of histogram bins</td><td>255</td></tr>
+<tr><td><code>feature_fraction</code></td><td>Column sampling per tree</td><td>0.8&ndash;1.0</td></tr>
+<tr><td><code>bagging_fraction</code> + <code>bagging_freq</code></td><td>Row sampling</td><td>0.8, freq 1</td></tr>
+<tr><td><code>lambda_l1</code>, <code>lambda_l2</code></td><td>L1 / L2 regularisation on leaf values</td><td>0&ndash;10</td></tr>
+<tr><td><code>boosting_type</code></td><td><code>gbdt</code>, <code>goss</code>, <code>dart</code>, <code>rf</code></td><td>gbdt</td></tr>
+<tr><td><code>min_gain_to_split</code></td><td>\(\gamma\) &mdash; minimum gain to allow a split</td><td>0</td></tr>
+</table>
+<h3><span class="nm">10.2</span>Practical Points</h3>
+<ul>
+<li><b>Known weakness:</b> LightGBM overfits easily on <b>small datasets</b> (roughly under 10,000 rows), because leaf-wise growth makes very specific leaves. Fix: lower <code>num_leaves</code>, raise <code>min_data_in_leaf</code>, set a <code>max_depth</code>.</li>
+<li>It is usually the <b>fastest</b> of the three on large tabular data, and it supports distributed and GPU training.</li>
+<li>Missing values are handled automatically (sent to the side that gives more gain), and it has an optional <code>zero_as_missing</code> mode.</li>
+<li>Deterministic results need <code>deterministic=True</code> and a fixed <code>num_threads</code>.</li>
+</ul>
+
+<h2><span class="nm">11</span>LightGBM Mind Map</h2>
+<div class="fig">
+<svg viewBox="0 0 560 280" xmlns="http://www.w3.org/2000/svg" font-family="Georgia,serif" font-size="9">
+  <rect x="8" y="120" width="84" height="30" rx="5" fill="#1a4fa0"/>
+  <text x="50" y="139" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">LightGBM</text>
+  <g stroke="#999" fill="none">
+    <path d="M92 135 L124 42"/><path d="M92 135 L124 108"/><path d="M92 135 L124 168"/><path d="M92 135 L124 232"/>
+  </g>
+  <g>
+    <rect x="124" y="28" width="132" height="26" rx="4" fill="#e8eefb" stroke="#1a4fa0"/>
+    <text x="190" y="45" text-anchor="middle" font-weight="700">Histogram binning</text>
+    <rect x="124" y="95" width="132" height="26" rx="4" fill="#e8eefb" stroke="#1a4fa0"/>
+    <text x="190" y="112" text-anchor="middle" font-weight="700">GOSS (row sampling)</text>
+    <rect x="124" y="155" width="132" height="26" rx="4" fill="#e8eefb" stroke="#1a4fa0"/>
+    <text x="190" y="172" text-anchor="middle" font-weight="700">EFB (feature merging)</text>
+    <rect x="124" y="219" width="132" height="26" rx="4" fill="#e8eefb" stroke="#1a4fa0"/>
+    <text x="190" y="236" text-anchor="middle" font-weight="700">Leaf-wise growth</text>
+  </g>
+  <g stroke="#bbb" fill="none">
+    <path d="M256 41 L286 20"/><path d="M256 41 L286 40"/><path d="M256 41 L286 60"/><path d="M256 41 L286 78"/>
+    <path d="M256 108 L286 98"/><path d="M256 108 L286 118"/><path d="M256 108 L286 138"/>
+    <path d="M256 168 L286 158"/><path d="M256 168 L286 178"/><path d="M256 168 L286 196"/>
+    <path d="M256 232 L286 216"/><path d="M256 232 L286 236"/><path d="M256 232 L286 256"/>
+  </g>
+  <g fill="#111">
+    <text x="292" y="23">255 bins, bin index = 1 byte &rarr; 8x less memory</text>
+    <text x="292" y="43">split search O(#bin) instead of O(#data)</text>
+    <text x="292" y="63" font-weight="700">subtraction: Hist_sibling = Hist_parent &minus; Hist_child</text>
+    <text x="292" y="81">binning is approximate &rarr; acts as regularisation</text>
+    <text x="292" y="101">big |g| = still wrong = informative</text>
+    <text x="292" y="121">keep top a%, sample b% of the rest</text>
+    <text x="292" y="141" font-weight="700">amplify sampled rows by (1 &minus; a) / b &rarr; unbiased</text>
+    <text x="292" y="161">sparse one-hot columns are mutually exclusive</text>
+    <text x="292" y="181">which to bundle = greedy graph colouring</text>
+    <text x="292" y="199" font-weight="700">how to merge = add an offset, lossless</text>
+    <text x="292" y="219">split the best leaf anywhere, not a whole level</text>
+    <text x="292" y="239">lower loss per leaf, but deep &amp; unbalanced</text>
+    <text x="292" y="259" font-weight="700">control with num_leaves &amp; min_data_in_leaf</text>
+  </g>
+</svg>
+</div>
+
+<!-- =================== PART 3 =================== -->
+<div class="part">
+  <div class="pk">Part 3</div>
+  <h1>XGBoost vs LightGBM vs CatBoost</h1>
+  <p>The comparison &mdash; this is what gets asked most</p>
+</div>
+
+<h2><span class="nm">1</span>Master Comparison Table</h2>
+<table class="grid">
+<tr><th style="width:118px">Point</th><th style="width:150px">XGBoost</th><th style="width:150px">LightGBM</th><th>CatBoost</th></tr>
+<tr><td>Made by / year</td><td>Tianqi Chen, 2014</td><td>Microsoft, 2017</td><td>Yandex, 2017</td></tr>
+<tr><td>Main contribution</td><td>Regularised boosting + system speed</td><td><b>Speed and memory</b></td><td><b>Categorical features + unbiased boosting</b></td></tr>
+<tr><td>Tree growth</td><td>Level-wise (depth-wise)</td><td><b>Leaf-wise</b> (best-first)</td><td><b>Symmetric / oblivious</b></td></tr>
+<tr><td>Split finding</td><td>Exact greedy, or approximate (weighted quantile sketch); histogram mode also available</td><td>Histogram + GOSS + EFB</td><td>Histogram on symmetric levels</td></tr>
+<tr><td>Split score</td><td>Similarity score / gain with \(\lambda,\gamma\)</td><td>Same gain formula</td><td>Same gain formula</td></tr>
+<tr><td>Categorical features</td><td><b>Not native</b> (newer versions have basic support; normally you one-hot or target-encode yourself)</td><td>Native, Fisher's sorting by \(\sum g/\sum h\)</td><td><b>Native and best</b> &mdash; ordered target statistics + automatic feature combinations</td></tr>
+<tr><td>Target leakage in encoding</td><td>Your responsibility</td><td>Possible on high-cardinality columns</td><td><b>Solved</b> by ordered TS</td></tr>
+<tr><td>Prediction shift</td><td>Present</td><td>Present</td><td><b>Solved</b> by ordered boosting</td></tr>
+<tr><td>Speed (large data)</td><td>Medium</td><td><b>Fastest</b></td><td>Slower to train (Ordered mode especially)</td></tr>
+<tr><td>Memory</td><td>Highest</td><td><b>Lowest</b></td><td>Medium</td></tr>
+<tr><td>Prediction (inference) speed</td><td>Medium</td><td>Medium</td><td><b>Fastest</b> (array lookup on a \(D\)-bit index)</td></tr>
+<tr><td>Small dataset</td><td>Good</td><td>Overfits easily</td><td><b>Best</b> (ordered boosting + symmetric trees)</td></tr>
+<tr><td>Works well with default settings</td><td>Needs tuning</td><td>Needs tuning (<code>num_leaves</code>!)</td><td><b>Usually yes</b></td></tr>
+<tr><td>Main overfit control</td><td><code>max_depth</code>, \(\lambda\), \(\gamma\), subsample</td><td><code>num_leaves</code>, <code>min_data_in_leaf</code></td><td><code>depth</code>, <code>l2_leaf_reg</code>, ordered mode</td></tr>
+<tr><td>Missing values</td><td>Learns a default direction per split</td><td>Same idea</td><td>Handled; missing category = own category</td></tr>
+<tr><td>GPU support</td><td>Yes</td><td>Yes</td><td>Yes (very good)</td></tr>
+<tr><td>Best use case</td><td>General tabular, a safe default, huge community</td><td>Large data, many features, sparse / one-hot data</td><td>Many categorical columns, small or medium data</td></tr>
+</table>
+
+<h2><span class="nm">2</span>Difference 1: How the Tree Grows</h2>
+<div class="fig">
+<svg viewBox="0 0 560 150" xmlns="http://www.w3.org/2000/svg" font-family="Georgia,serif" font-size="8.6">
+  <text x="90" y="12" text-anchor="middle" font-weight="700" fill="#1a4fa0">XGBoost: level-wise</text>
+  <g fill="#e8eefb" stroke="#1a4fa0"><circle cx="90" cy="32" r="8"/><circle cx="62" cy="62" r="8"/><circle cx="118" cy="62" r="8"/>
+    <circle cx="44" cy="92" r="8"/><circle cx="80" cy="92" r="8"/><circle cx="100" cy="92" r="8"/><circle cx="136" cy="92" r="8"/></g>
+  <g stroke="#1a4fa0" fill="none"><path d="M84 39 L68 55"/><path d="M96 39 L112 55"/><path d="M56 69 L50 85"/><path d="M68 69 L74 85"/><path d="M112 69 L106 85"/><path d="M124 69 L130 85"/></g>
+  <text x="90" y="118" text-anchor="middle" fill="#555">whole level at a time</text>
+  <text x="90" y="131" text-anchor="middle" fill="#555">balanced, safer</text>
+
+  <line x1="190" y1="5" x2="190" y2="145" stroke="#ccc"/>
+  <text x="280" y="12" text-anchor="middle" font-weight="700" fill="#2e7d4f">LightGBM: leaf-wise</text>
+  <g fill="#eaf6ee" stroke="#2e7d4f"><circle cx="280" cy="32" r="8"/><circle cx="252" cy="62" r="8"/><circle cx="308" cy="62" r="8"/>
+    <circle cx="232" cy="92" r="8"/><circle cx="272" cy="92" r="8"/><circle cx="252" cy="122" r="8"/><circle cx="292" cy="122" r="8"/></g>
+  <g stroke="#2e7d4f" fill="none"><path d="M274 39 L258 55"/><path d="M286 39 L302 55"/><path d="M246 69 L238 85"/><path d="M258 69 L266 85"/><path d="M266 99 L258 115"/><path d="M278 99 L286 115"/></g>
+  <text x="280" y="141" text-anchor="middle" fill="#555">best leaf anywhere &rarr; deep, accurate, risky</text>
+
+  <line x1="375" y1="5" x2="375" y2="145" stroke="#ccc"/>
+  <text x="468" y="12" text-anchor="middle" font-weight="700" fill="#8a0f3c">CatBoost: symmetric</text>
+  <g fill="#f4e9f5" stroke="#8a0f3c"><circle cx="468" cy="32" r="8"/><circle cx="440" cy="62" r="8"/><circle cx="496" cy="62" r="8"/>
+    <circle cx="422" cy="92" r="8"/><circle cx="458" cy="92" r="8"/><circle cx="478" cy="92" r="8"/><circle cx="514" cy="92" r="8"/></g>
+  <g stroke="#8a0f3c" fill="none"><path d="M462 39 L446 55"/><path d="M474 39 L490 55"/><path d="M434 69 L428 85"/><path d="M446 69 L452 85"/><path d="M490 69 L484 85"/><path d="M502 69 L508 85"/></g>
+  <text x="440" y="60" font-size="7.5" fill="#8a0f3c">same split</text><text x="496" y="60" font-size="7.5" fill="#8a0f3c">same split</text>
+  <text x="468" y="118" text-anchor="middle" fill="#555">one split per level for all nodes</text>
+  <text x="468" y="131" text-anchor="middle" fill="#555">fast inference, built-in regularisation</text>
+</svg>
+<div class="cap">Figure 2.1 &mdash; The single picture that answers "what is the main difference between the three?"</div>
+</div>
+
+<h2><span class="nm">3</span>Difference 2: How the Split is Found</h2>
+<table class="grid">
+<tr><th style="width:118px">Library</th><th>Method</th><th>Cost</th></tr>
+<tr><td>XGBoost (exact)</td><td>Pre-sort every feature, scan all thresholds</td><td>\(O(\#data\times\#feature)\), high memory</td></tr>
+<tr><td>XGBoost (approx)</td><td><b>Weighted quantile sketch</b>: propose candidate thresholds using the Hessian \(h_i\) as the weight of each row</td><td>\(O(\#candidate\times\#feature)\)</td></tr>
+<tr><td>LightGBM</td><td><b>Histogram</b> 255 bins + subtraction trick + GOSS (fewer rows) + EFB (fewer features)</td><td>\(O(\#bin\times\#feature)\), lowest memory</td></tr>
+<tr><td>CatBoost</td><td>Histogram, but only <b>one split per level</b> has to be chosen</td><td>Few decisions per tree, very fast prediction</td></tr>
+</table>
+<div class="nbox"><div class="tt">Why is the quantile "weighted" in XGBoost?</div>
+<p>Because the second-order objective can be rewritten as a weighted squared error with weight \(h_i\). Rows with a bigger Hessian matter more, so the candidate thresholds are chosen so that each bucket carries an <b>equal total \(h\)</b>, not an equal number of rows.</p></div>
+
+<h2><span class="nm">4</span>Difference 3: Categorical Features</h2>
+<table class="grid">
+<tr><th style="width:118px">Library</th><th>Approach</th><th>Risk</th></tr>
+<tr><td>XGBoost</td><td>You encode it yourself (one-hot, target encoding, ordinal). Recent versions accept <code>enable_categorical=True</code> with pandas <code>category</code> dtype.</td><td>If you target-encode on the full training set, <b>you create leakage yourself</b>.</td></tr>
+<tr><td>LightGBM</td><td>Sorts categories by \(\sum g/\sum h\) and splits the sorted list (Fisher's method).</td><td>Overfits on high-cardinality columns; needs <code>cat_smooth</code>, <code>min_data_per_group</code>.</td></tr>
+<tr><td>CatBoost</td><td><b>Ordered target statistics</b> + automatic <b>feature combinations</b> + one-hot for tiny cardinality.</td><td>Almost none; this is its main selling point.</td></tr>
+</table>
+
+<h2><span class="nm">5</span>Speed, Memory and Accuracy</h2>
+<table class="bk">
+<tr><th>Measure</th><th>Winner</th><th>Reason in one line</th></tr>
+<tr><td>Training speed on big data</td><td>LightGBM</td><td>Histogram + GOSS (fewer rows) + EFB (fewer features)</td></tr>
+<tr><td>Memory</td><td>LightGBM</td><td>1-byte bin index, no sorted index array</td></tr>
+<tr><td>Prediction speed</td><td>CatBoost</td><td>Oblivious tree = \(D\) comparisons &rarr; one array lookup</td></tr>
+<tr><td>Accuracy on numeric-heavy data</td><td>Roughly equal</td><td>Same boosting maths; tuning matters more than the library</td></tr>
+<tr><td>Accuracy with many categorical columns</td><td>CatBoost</td><td>Ordered TS + combinations</td></tr>
+<tr><td>Accuracy on small data</td><td>CatBoost</td><td>Ordered boosting removes the \(1/n\) bias</td></tr>
+<tr><td>Community, tooling, deployment</td><td>XGBoost</td><td>Oldest, most documentation and integrations</td></tr>
+</table>
+
+<h2><span class="nm">6</span>Which One Should You Use?</h2>
+<div class="fig">
+<svg viewBox="0 0 540 170" xmlns="http://www.w3.org/2000/svg" font-family="Georgia,serif" font-size="9">
+  <rect x="190" y="6" width="160" height="24" rx="5" fill="#444"/>
+  <text x="270" y="22" text-anchor="middle" fill="#fff" font-weight="700">Look at your data</text>
+  <g stroke="#999" fill="none"><path d="M270 30 L270 42"/><path d="M90 42 L450 42"/>
+    <path d="M90 42 L90 58"/><path d="M270 42 L270 58"/><path d="M450 42 L450 58"/></g>
+  <g>
+    <rect x="18" y="58" width="144" height="36" rx="5" fill="#f4e9f5" stroke="#8a0f3c"/>
+    <text x="90" y="73" text-anchor="middle">many categorical columns,</text><text x="90" y="86" text-anchor="middle">or small / medium data</text>
+    <rect x="198" y="58" width="144" height="36" rx="5" fill="#eaf6ee" stroke="#2e7d4f"/>
+    <text x="270" y="73" text-anchor="middle">very large data, many</text><text x="270" y="86" text-anchor="middle">features, sparse / one-hot</text>
+    <rect x="378" y="58" width="144" height="36" rx="5" fill="#e8eefb" stroke="#1a4fa0"/>
+    <text x="450" y="73" text-anchor="middle">mostly numeric, normal</text><text x="450" y="86" text-anchor="middle">size, need a safe default</text>
+  </g>
+  <g stroke="#999" fill="none"><path d="M90 94 L90 108"/><path d="M270 94 L270 108"/><path d="M450 94 L450 108"/></g>
+  <g>
+    <rect x="40" y="108" width="100" height="24" rx="5" fill="#8a0f3c"/><text x="90" y="124" text-anchor="middle" fill="#fff" font-weight="700">CatBoost</text>
+    <rect x="220" y="108" width="100" height="24" rx="5" fill="#2e7d4f"/><text x="270" y="124" text-anchor="middle" fill="#fff" font-weight="700">LightGBM</text>
+    <rect x="400" y="108" width="100" height="24" rx="5" fill="#1a4fa0"/><text x="450" y="124" text-anchor="middle" fill="#fff" font-weight="700">XGBoost</text>
+  </g>
+  <text x="270" y="155" text-anchor="middle" fill="#555" font-style="italic">In a real project: try all three with default settings, then tune the best one. Or blend all three &mdash; they make different errors.</text>
+</svg>
+</div>
+
+<h2><span class="nm">7</span>Hyperparameter Mapping</h2>
+<p>Same idea, three different names &mdash; useful when you move code from one library to another.</p>
+<table class="grid">
+<tr><th style="width:140px">What it controls</th><th>XGBoost</th><th>LightGBM</th><th>CatBoost</th></tr>
+<tr><td>Number of trees</td><td><code>n_estimators</code></td><td><code>n_estimators</code></td><td><code>iterations</code></td></tr>
+<tr><td>Learning rate</td><td><code>eta</code> / <code>learning_rate</code></td><td><code>learning_rate</code></td><td><code>learning_rate</code></td></tr>
+<tr><td>Tree size</td><td><code>max_depth</code></td><td><code>num_leaves</code> (main), <code>max_depth</code></td><td><code>depth</code></td></tr>
+<tr><td>L2 regularisation</td><td><code>lambda</code> / <code>reg_lambda</code></td><td><code>lambda_l2</code></td><td><code>l2_leaf_reg</code></td></tr>
+<tr><td>L1 regularisation</td><td><code>alpha</code></td><td><code>lambda_l1</code></td><td>&mdash;</td></tr>
+<tr><td>Minimum gain to split</td><td><code>gamma</code></td><td><code>min_gain_to_split</code></td><td>&mdash;</td></tr>
+<tr><td>Minimum rows per leaf</td><td><code>min_child_weight</code> (sum of \(h\))</td><td><code>min_data_in_leaf</code></td><td><code>min_data_in_leaf</code></td></tr>
+<tr><td>Row sampling</td><td><code>subsample</code></td><td><code>bagging_fraction</code></td><td><code>subsample</code> / <code>bagging_temperature</code></td></tr>
+<tr><td>Column sampling</td><td><code>colsample_bytree</code></td><td><code>feature_fraction</code></td><td><code>rsm</code></td></tr>
+<tr><td>Class imbalance</td><td><code>scale_pos_weight</code></td><td><code>scale_pos_weight</code> / <code>is_unbalance</code></td><td><code>scale_pos_weight</code> / <code>auto_class_weights</code></td></tr>
+<tr><td>Early stopping</td><td><code>early_stopping_rounds</code></td><td><code>early_stopping_rounds</code></td><td><code>early_stopping_rounds</code></td></tr>
+</table>
+
+<h2><span class="nm">8</span>Interview Questions &amp; Answers</h2>
+
+<div class="rbox"><div class="tt">Q1. What is the difference between XGBoost, LightGBM and CatBoost?</div>
+<p>All three are gradient boosting on decision trees, so the maths of boosting is identical. They differ in three things. <b>Tree growth</b>: XGBoost grows level-wise, LightGBM leaf-wise, CatBoost builds symmetric trees. <b>Split finding</b>: XGBoost uses exact or sketch-based search, LightGBM uses histograms plus GOSS and EFB, CatBoost uses histograms on symmetric levels. <b>Special problem solved</b>: LightGBM solves speed and memory, CatBoost solves categorical features and the bias of boosting.</p></div>
+
+<div class="rbox"><div class="tt">Q2. Why is LightGBM faster than XGBoost?</div>
+<p>Three reasons. It bins each feature into 255 buckets, so the split search is over bins, not rows, and the data fits in 1 byte per value. It uses the histogram subtraction trick, so one child's histogram is free. And GOSS trains on about a third of the rows while EFB reduces the number of features.</p></div>
+
+<div class="rbox"><div class="tt">Q3. Explain GOSS.</div>
+<p>Gradient-based One-Side Sampling. Rows with a large absolute gradient are still badly predicted, so they are informative; rows with a small gradient are already learnt. GOSS keeps all of the top \(a\%\) by \(|g|\) and randomly samples \(b\%\) of the rest, then multiplies the sampled rows' gradients by \(\frac{1-a}{b}\) so that the gain estimate stays unbiased. With \(a=0.2,b=0.1\) the factor is 8, because the small-gradient group is 80% of the data but only 10% was kept.</p></div>
+
+<div class="rbox"><div class="tt">Q4. Explain EFB.</div>
+<p>Exclusive Feature Bundling. In sparse data many features are never non-zero at the same time, for example one-hot columns. Such features are bundled into a single feature, which reduces the feature count without losing information. Choosing the bundles is a graph colouring problem solved greedily with a small allowed conflict rate, and merging is done by adding an offset so each original feature occupies its own range of bin values.</p></div>
+
+<div class="rbox"><div class="tt">Q5. Leaf-wise vs level-wise &mdash; which is better?</div>
+<p>Leaf-wise gives a lower loss for the same number of leaves, because it always splits the leaf with the highest gain. But the tree becomes deep and unbalanced, so it overfits on small data. Level-wise is more balanced and safer but wastes work on low-gain nodes. In LightGBM I control leaf-wise growth with <code>num_leaves</code> and <code>min_data_in_leaf</code>.</p></div>
+
+<div class="rbox"><div class="tt">Q6. What is target leakage in categorical encoding?</div>
+<p>When the target of a row is used to build that same row's feature. In the extreme case where every category is unique, mean encoding makes the feature equal to the target, so one split gives perfect training accuracy and random test accuracy. Even leave-one-out encoding leaks, because the row's own \(y\) is visibly subtracted out of the mean.</p></div>
+
+<div class="rbox"><div class="tt">Q7. How does CatBoost handle categorical features?</div>
+<p>With ordered target statistics. It picks a random permutation to act as artificial time, and the encoding of a row is computed using only the rows that appear before it, with a prior for smoothing. The row's own target is never used, so there is no leakage, and no data is wasted. It also creates feature combinations automatically, and uses one-hot encoding for very low-cardinality columns.</p></div>
+
+<div class="rbox"><div class="tt">Q8. What is prediction shift and ordered boosting?</div>
+<p>In ordinary boosting the residual of a row is computed from a model that was trained on that same row, so the residuals on training data are smaller than on unseen data. That bias is called prediction shift and it is of order \(1/n\), so it hurts small datasets most. CatBoost's ordered boosting computes each row's gradient from a supporting model trained only on the rows before it in the permutation, which makes the gradient unbiased.</p></div>
+
+<div class="rbox"><div class="tt">Q9. What is an oblivious tree and why use it?</div>
+<p>A tree where all nodes at the same depth use the same feature and threshold. Advantages: prediction is extremely fast, because the \(D\) comparisons build a \(D\)-bit index and the leaf value is a single array lookup; and the restricted structure acts as regularisation, which is why CatBoost works well out of the box. The disadvantage is less flexibility, so it may need more trees.</p></div>
+
+<div class="rbox"><div class="tt">Q10. Which library would you choose for a dataset with many categorical columns?</div>
+<p>CatBoost, because it encodes them internally without leakage and builds combinations automatically. LightGBM can take categorical columns too but overfits on high-cardinality ones, and XGBoost normally needs me to encode them myself, where I would have to be careful about leakage.</p></div>
+
+<div class="rbox"><div class="tt">Q11. Why does LightGBM overfit on small datasets?</div>
+<p>Because leaf-wise growth keeps splitting the single best leaf, so it can build a very deep branch that fits a handful of rows. On small data there are not enough rows to stop it. The fix is to lower <code>num_leaves</code>, raise <code>min_data_in_leaf</code>, set a <code>max_depth</code>, and use a smaller learning rate with more trees.</p></div>
+
+<div class="rbox"><div class="tt">Q12. Does binning in LightGBM reduce accuracy?</div>
+<p>Slightly, because the split can only be placed on a bin boundary, so it is approximate. In practice the loss is negligible and the coarse threshold acts as regularisation. <code>max_bin</code> controls the trade-off: smaller is faster and more regularised, larger is more exact.</p></div>
+
+<div class="rbox"><div class="tt">Q13. What is the histogram subtraction trick?</div>
+<p>Since every row of a parent node goes to exactly one child, the parent histogram is the sum of the two children's histograms, bin by bin. So LightGBM builds the histogram only for the smaller child and obtains the other by subtraction, which roughly halves the work at every level.</p></div>
+
+<div class="rbox"><div class="tt">Q14. Is the gain formula different in the three libraries?</div>
+<p>No. All three use the same second-order gain, \(\frac12\big[\frac{G_L^2}{H_L+\lambda}+\frac{G_R^2}{H_R+\lambda}-\frac{G_P^2}{H_P+\lambda}\big]-\gamma\), and the same leaf value \(w=-\frac{G}{H+\lambda}\). What differs is <b>which candidate splits are evaluated</b> and <b>which node gets split next</b>.</p></div>
+
+<div class="rbox"><div class="tt">Q15. Why do all three beat a single deep decision tree?</div>
+<p>A single deep tree has low bias but very high variance. Boosting builds many shallow trees where each one corrects the errors of the previous ones, and the learning rate keeps every step small. So the bias comes down gradually while the variance stays controlled by the shallow depth, the shrinkage and the regularisation terms.</p></div>
+
+<div class="rbox"><div class="tt">Q16. In one sentence, when do you use each?</div>
+<p>LightGBM when the data is large and speed matters, CatBoost when categorical features dominate or the dataset is small, and XGBoost as a reliable general default with the biggest ecosystem.</p></div>
+
+<h2><span class="nm">9</span>Final Mind Map</h2>
+<div class="fig">
+<svg viewBox="0 0 560 250" xmlns="http://www.w3.org/2000/svg" font-family="Georgia,serif" font-size="8.8">
+  <rect x="200" y="6" width="160" height="26" rx="5" fill="#444"/>
+  <text x="280" y="24" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">Gradient Boosting (GBDT)</text>
+  <text x="280" y="46" text-anchor="middle" fill="#555" font-style="italic">same objective, same gain, same leaf weight w = &minus;G/(H+&#955;)</text>
+  <g stroke="#999" fill="none"><path d="M280 52 L280 62"/><path d="M95 62 L465 62"/>
+    <path d="M95 62 L95 74"/><path d="M280 62 L280 74"/><path d="M465 62 L465 74"/></g>
+
+  <rect x="18" y="74" width="154" height="22" rx="4" fill="#1a4fa0"/>
+  <text x="95" y="89" text-anchor="middle" fill="#fff" font-weight="700">XGBoost (2014)</text>
+  <g fill="#111">
+    <text x="22" y="112">level-wise growth</text>
+    <text x="22" y="127">exact greedy / weighted</text><text x="22" y="139">quantile sketch</text>
+    <text x="22" y="154">regularisation &#955;, &#947;</text>
+    <text x="22" y="169">sparsity-aware (missing)</text>
+    <text x="22" y="184">cache + parallel + out-of-core</text>
+    <text x="22" y="205" font-style="italic" fill="#1a4fa0">strength: safe general default</text>
+    <text x="22" y="219" font-style="italic" fill="#999">weak: slower, more memory,</text>
+    <text x="22" y="231" font-style="italic" fill="#999">no real categorical support</text>
+  </g>
+
+  <rect x="203" y="74" width="154" height="22" rx="4" fill="#2e7d4f"/>
+  <text x="280" y="89" text-anchor="middle" fill="#fff" font-weight="700">LightGBM (2017)</text>
+  <g fill="#111">
+    <text x="207" y="112">leaf-wise growth</text>
+    <text x="207" y="127">histogram, 255 bins</text>
+    <text x="207" y="139">+ subtraction trick</text>
+    <text x="207" y="154">GOSS: weight (1&minus;a)/b</text>
+    <text x="207" y="169">EFB: bundle sparse features</text>
+    <text x="207" y="184">categorical by sorting &#931;g/&#931;h</text>
+    <text x="207" y="205" font-style="italic" fill="#2e7d4f">strength: fastest, least memory</text>
+    <text x="207" y="219" font-style="italic" fill="#999">weak: overfits small data,</text>
+    <text x="207" y="231" font-style="italic" fill="#999">num_leaves must be tuned</text>
+  </g>
+
+  <rect x="388" y="74" width="154" height="22" rx="4" fill="#8a0f3c"/>
+  <text x="465" y="89" text-anchor="middle" fill="#fff" font-weight="700">CatBoost (2017)</text>
+  <g fill="#111">
+    <text x="392" y="112">symmetric (oblivious) trees</text>
+    <text x="392" y="127">ordered target statistics</text>
+    <text x="392" y="139">(no target leakage)</text>
+    <text x="392" y="154">ordered boosting</text>
+    <text x="392" y="169">(no prediction shift)</text>
+    <text x="392" y="184">automatic feature combinations</text>
+    <text x="392" y="205" font-style="italic" fill="#8a0f3c">strength: categorical + defaults</text>
+    <text x="392" y="219" font-style="italic" fill="#999">weak: slower training,</text>
+    <text x="392" y="231" font-style="italic" fill="#999">less flexible trees</text>
+  </g>
+</svg>
+</div>
+
+<div class="kbox"><div class="tt">Last line to remember</div>
+<p>Boosting itself is the same in all three. <b>XGBoost made it regularised, LightGBM made it fast, CatBoost made it honest.</b></p></div>
+
+<script src="katex/katex.min.js"></script><script src="katex/auto-render.min.js"></script>
+<script>renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});</script>
+</body></html>

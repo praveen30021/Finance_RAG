@@ -1,0 +1,72 @@
+:root{ --blue:#1a4fa0; --maroon:#8a0f3c; --boxbg:#f4e9f5; --green:#2e7d4f; --greenbg:#eef7f1;
+       --bluebox:#3b6fc4; --bluebg:#fbfcff; --gray:#444; --rule:#cfd4dc; }
+*{box-sizing:border-box}
+html{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+body{margin:0; color:#111; background:#fff;
+  font-family:"KaTeX_Main","Liberation Serif",Georgia,serif; font-size:10.4pt; line-height:1.42;
+  text-align:justify;}
+h1.doc{font-size:19pt; text-align:center; margin:0 0 2px; font-weight:700}
+p.sub{text-align:center; font-size:11pt; color:var(--gray); margin:0 0 4px; font-style:italic}
+p.date{text-align:center; font-size:9.5pt; color:var(--gray); margin:0 0 18px}
+h2{font-size:13.6pt; color:var(--blue); margin:16px 0 7px; font-weight:700; break-after:avoid}
+h3{font-size:11.6pt; color:var(--blue); margin:12px 0 5px; font-weight:700; break-after:avoid}
+h4{font-size:10.6pt; color:var(--blue); margin:9px 0 4px; font-weight:700; break-after:avoid}
+h2 .nm,h3 .nm,h4 .nm{display:inline-block; margin-right:9px}
+p{margin:5px 0}
+ul,ol{margin:5px 0; padding-left:20px} li{margin:2.5px 0}
+b,strong{font-weight:700}
+.part{break-before:page; text-align:center; margin:0 0 16px; padding:14px 0 12px;
+  border-top:2.2pt solid var(--maroon); border-bottom:2.2pt solid var(--maroon)}
+.part .pk{font-size:9.5pt; letter-spacing:.22em; text-transform:uppercase; color:var(--maroon)}
+.part h1{font-size:21pt; margin:5px 0 3px}
+.part p{margin:0; font-size:10pt; color:var(--gray); font-style:italic; text-align:center}
+
+/* maroon titled formula box (like the source PDF) */
+.fbox{margin:10px 0; break-inside:avoid; border-bottom:1.3pt solid var(--maroon)}
+.fbox .tt{background:var(--maroon); color:#fff; font-weight:700; font-size:9.6pt; padding:2.5px 8px}
+.fbox .bd{background:var(--boxbg); padding:7px 11px}
+.fbox .bd p{margin:4px 0}
+
+/* blue "Formula / Result" box */
+.rbox{border:0.9pt solid var(--bluebox); background:var(--bluebg); border-radius:3px;
+      padding:7px 11px; margin:9px 0; break-inside:avoid}
+.rbox .tt{color:var(--bluebox); font-weight:700; font-size:9.8pt; margin-bottom:3px}
+/* green "Key Insight" box */
+.kbox{border:0.9pt solid var(--green); background:var(--greenbg); border-radius:3px;
+      padding:7px 11px; margin:9px 0; break-inside:avoid}
+.kbox .tt{color:var(--green); font-weight:700; font-size:9.8pt; margin-bottom:3px}
+/* gray note box */
+.nbox{border-left:2.5pt solid #999; background:#f7f7f8; padding:6px 10px; margin:9px 0; break-inside:avoid}
+.nbox .tt{font-weight:700; font-size:9.8pt; margin-bottom:2px}
+.box p:first-child,.rbox p:first-of-type,.kbox p:first-of-type{margin-top:0}
+.rbox p:last-child,.kbox p:last-child,.nbox p:last-child{margin-bottom:0}
+
+/* booktabs tables */
+table{width:100%; border-collapse:collapse; margin:9px 0; font-size:9.3pt; break-inside:avoid}
+table.bk th{border-top:1.2pt solid #111; border-bottom:0.7pt solid #111; padding:4px 6px; text-align:left; font-weight:700}
+table.bk td{padding:3.5px 6px; border:none}
+table.bk tbody tr:last-child td{border-bottom:1.2pt solid #111}
+table.grid th{background:#eef1f6; border:0.6pt solid #99a; padding:4px 6px; text-align:left}
+table.grid td{border:0.6pt solid #99a; padding:3.5px 6px; vertical-align:top}
+table.grid tbody tr:nth-child(even){background:#fafbfd}
+.cap{text-align:center; font-size:9pt; color:var(--gray); margin-top:3px}
+
+.fig{margin:10px 0; text-align:center; break-inside:avoid}
+.fig svg{max-width:100%; height:auto}
+pre{background:#f5f5f7; border:0.6pt solid #d7d9e0; border-radius:3px; padding:6px 9px;
+  font-family:Consolas,"DejaVu Sans Mono",monospace; font-size:8.4pt; line-height:1.45;
+  white-space:pre-wrap; margin:7px 0; break-inside:avoid; text-align:left}
+code{font-family:Consolas,"DejaVu Sans Mono",monospace; font-size:9pt}
+.toc{font-size:10pt}
+.toc .t1{margin:3px 0; font-weight:700}
+.toc .t2{margin:1.5px 0 1.5px 18px; color:#222}
+.toc .dots{color:#999}
+.step{font-weight:700; margin:8px 0 2px}
+.katex-display{margin:7px 0 !important}
+.katex{font-size:1.02em}
+hr.thin{border:none;border-top:0.6pt solid var(--rule); margin:12px 0}
+.small{font-size:9.3pt; color:var(--gray)}
+
+td{text-align:left}
+th{text-align:left}
+.katex-display > .katex{text-align:center}
