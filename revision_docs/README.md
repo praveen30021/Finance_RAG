@@ -4,7 +4,7 @@ Placement-interview revision guides for Python data visualization.
 
 | File | Pages | Covers |
 |---|---|---|
-| `CatBoost_LightGBM_Revision_Guide.pdf` | 26 | CatBoost (ordered target statistics, ordered boosting, oblivious trees), LightGBM (histogram split finding, GOSS, EFB, leaf-wise growth), and a three-way comparison with XGBoost — theory, derivations, worked examples, mind maps, 16 Q&A |
+| `CatBoost_LightGBM_Revision_Guide.pdf` | 17 | CatBoost (ordered target statistics, ordered boosting, oblivious trees), LightGBM (histogram split finding, GOSS, EFB, leaf-wise growth), and a three-way comparison with XGBoost — theory, derivations, worked examples, mind maps, 16 Q&A |
 | `Python_Data_Master_Revision_Guide.pdf` | 42 | **All four topics in one doc** — mindmaps, NumPy, Pandas, Matplotlib, Seaborn as function→use→code tables, 45 Q&A, master cheat sheet |
 | `Matplotlib_Complete_Revision_Guide.pdf` | 26 | Architecture, Figure/Axes/Axis, pyplot vs OO, all chart types, subplots & GridSpec, colormaps, annotations, 3D, saving, animation, cheat sheet, 31 interview Q&A |
 | `Seaborn_Complete_Revision_Guide.pdf` | 22 | Figure-level vs axes-level, long/wide data, relational, categorical, distribution, joint/pair, heatmap/clustermap, regression, FacetGrid, styling, cheat sheet, 30 interview Q&A |
